@@ -591,10 +591,10 @@ description: Go JWT認証の実装
 
 ## 実装フェーズ
 
-### Phase 0: 環境検証
+### Phase 0: 環境検証 [完了]
 
-- [ ] `bastion doctor` コマンド（必須 CLI の存在確認）
-- [ ] プロジェクト構造の確立（cmd/bastion, internal/）
+- [x] `bastion doctor` コマンド（必須 CLI の存在確認）
+- [x] プロジェクト構造の確立（cmd/bastion, internal/）
 
 ### Phase 1: 基盤（MVP）
 

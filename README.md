@@ -90,6 +90,19 @@ go build -o bastion ./cmd/bastion
 mv bastion /usr/local/bin/
 ```
 
+## 実装状況
+
+### Phase 0: 環境検証 [完了]
+
+- bastion doctor コマンド実装
+- プロジェクト構造確立（cmd/bastion, internal/）
+- カラー出力対応（terminal パッケージ）
+- テストコード完備
+
+### Phase 1-4: 実装予定
+
+詳細は [bastion-spec-v2.md](bastion-spec-v2.md) を参照してください。
+
 ## 使い方
 
 ### 環境チェック
