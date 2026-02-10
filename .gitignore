@@ -29,6 +29,8 @@ vendor/
 # Bastion 固有の実行時生成ファイル
 /queue/
 /.worktrees/
+/dashboard.md
+/knowledge/
 
 # IDE/Editor
 .vscode/
