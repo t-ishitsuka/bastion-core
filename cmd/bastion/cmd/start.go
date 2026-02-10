@@ -2,8 +2,10 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
+	"github.com/t-ishitsuka/bastion-core/internal/orchestrator"
 	"github.com/t-ishitsuka/bastion-core/internal/parallel"
 	"github.com/t-ishitsuka/bastion-core/internal/terminal"
 )
@@ -41,6 +43,34 @@ func runStart(cmd *cobra.Command, args []string) error {
 
 	terminal.PrintSuccess("✓ tmux セッションを作成しました")
 
+	// プロジェクトルートを取得
+	projectRoot, err := os.Getwd()
+	if err != nil {
+		terminal.PrintError("プロジェクトルートの取得に失敗: %v", err)
+		return err
+	}
+
+	// Orchestrator を作成
+	orch := orchestrator.NewOrchestrator(projectRoot, specialists)
+
+	terminal.PrintInfo("エージェントを起動しています...")
+
+	// すべてのエージェントを起動
+	if err := orch.StartAll(); err != nil {
+		terminal.PrintWarning("エージェントの起動に失敗: %v", err)
+		terminal.PrintInfo("手動で起動してください: tmux attach -t %s", parallel.SessionName)
+	} else {
+		terminal.PrintSuccess("✓ エージェントを起動しました")
+	}
+
+	// watcher を起動
+	terminal.PrintInfo("inbox 監視を開始しています...")
+	if err := orch.StartWatcher(); err != nil {
+		terminal.PrintWarning("watcher の起動に失敗: %v", err)
+	} else {
+		terminal.PrintSuccess("✓ inbox 監視を開始しました")
+	}
+
 	// セッション情報を表示
 	sm := parallel.NewSessionManager()
 	windows, err := sm.ListWindows()
@@ -58,6 +88,11 @@ func runStart(cmd *cobra.Command, args []string) error {
 	terminal.PrintSuccess("Bastion セッションが起動しました")
 	terminal.PrintInfo("セッションにアタッチ: tmux attach -t %s", parallel.SessionName)
 	terminal.PrintInfo("セッションを確認: bastion status")
+	fmt.Println()
+	terminal.PrintInfo("各エージェントで Claude Code が起動しています")
+	terminal.PrintInfo("Envoy: ユーザー対話窓口")
+	terminal.PrintInfo("Marshall: タスク管理")
+	terminal.PrintInfo("Specialists: タスク実行 (x%d)", specialists)
 
 	return nil
 }

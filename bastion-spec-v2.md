@@ -596,12 +596,12 @@ description: Go JWT認証の実装
 - [x] `bastion doctor` コマンド（必須 CLI の存在確認）
 - [x] プロジェクト構造の確立（cmd/bastion, internal/）
 
-### Phase 1: 基盤（MVP）
+### Phase 1: 基盤（MVP）[完了]
 
 - [x] Go で通信層実装（inbox / watcher）
 - [x] tmux セッション管理
-- [ ] Envoy → Marshall → Specialist 通信
-- [ ] 基本 CLI（start, status）
+- [x] 基本 CLI（start, status, stop）
+- [x] Envoy → Marshall → Specialist 通信
 
 ### Phase 2: 並列実行
 

@@ -102,22 +102,53 @@ mv bastion /usr/local/bin/
 - カラー出力対応（terminal パッケージ）
 - テストコード完備
 
-### Phase 1: 基盤（MVP）[進行中]
+### Phase 1: 基盤（MVP）[完了]
 
 - [x] 通信層実装
   - InboxManager（メッセージ読み書き）
   - CommandQueueManager（指令管理）
   - Watcher（fsnotify によるファイル監視）
-  - カバレッジ: 83.0%
+  - カバレッジ: 84.4%
 - [x] tmux セッション管理
   - SessionManager（セッション・ウィンドウ・ペイン管理）
   - セッション作成・停止・状態確認
   - send-keys によるコマンド送信
-  - 全 10 テストパス、カバレッジ: 78.1%
-- [ ] Envoy → Marshall → Specialist 通信
-- [ ] 基本 CLI（start, status）
+  - 全 10 テストパス、カバレッジ: 69.9%
+- [x] 基本 CLI（start, status, stop）
+  - `bastion start`: セッション起動
+  - `bastion status`: 状態確認
+  - `bastion stop`: セッション停止
+  - 全 7 テストパス、カバレッジ: 43.0%
+- [x] Envoy → Marshall → Specialist 通信
+  - Orchestrator（エージェント管理）
+  - 各エージェント用 CLAUDE.md（envoy, marshall, specialist）
+  - 自動起動: `bastion start` で claude が各ウィンドウで起動
+  - 役割分担: Envoy（対話）→ Marshall（管理）→ Specialists（実行）
 
-**全体カバレッジ: 71.0%** （目標 50% 超え）
+**全体カバレッジ: 72.3%** （目標 50% 超え）
+
+## 使い方
+
+```bash
+# Bastion セッションを起動
+$ bastion start
+
+# セッションにアタッチ（各エージェントで Claude Code が動作中）
+$ tmux attach -t bastion
+
+# セッション内の操作:
+# - Window 0 (envoy): ユーザーとの対話窓口
+# - Window 1 (marshall): タスク管理・並列実行制御
+# - Window 2 (specialists): 専門タスク実行（2ペイン）
+
+# セッションをデタッチ: Ctrl+B → D
+
+# セッション状態確認
+$ bastion status
+
+# セッション停止
+$ bastion stop
+```
 
 ### Phase 2-4: 実装予定
 
