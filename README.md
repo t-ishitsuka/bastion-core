@@ -1,5 +1,8 @@
 # Bastion
 
+[![Test](https://github.com/t-ishitsuka/bastion-core/actions/workflows/test.yml/badge.svg)](https://github.com/t-ishitsuka/bastion-core/actions/workflows/test.yml)
+[![Go Version](https://img.shields.io/badge/Go-1.22+-00ADD8?logo=go)](https://go.dev/)
+
 > 「一人開発会社」を実現する Claude Code マルチエージェントオーケストレーター
 
 ## 概要
@@ -247,6 +250,29 @@ knowledge/
 - Envoy は即座に委譲してユーザー入力を待てる状態に戻る
 - Marshall がバックグラウンドで並列処理を管理
 - 完了すると知識として蓄積され、次回以降に活用
+
+## 開発
+
+### テスト実行
+
+```bash
+# すべてのテストを実行
+go test ./...
+
+# カバレッジ付きテスト
+go test -v -race -coverprofile=coverage.out ./...
+go tool cover -func=coverage.out
+```
+
+### CI/CD
+
+GitHub Actions で自動的に以下が実行されます:
+
+- テスト（カバレッジ閾値: 25% 以上必須、50% 以上推奨）
+- golangci-lint による静的解析
+- ビルド検証
+
+ワークフロー: `.github/workflows/test.yml`
 
 ## 参考
 
