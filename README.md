@@ -76,16 +76,39 @@ User
 ## インストール
 
 ```bash
-# ソースからビルド
-git clone https://github.com/yourname/bastion.git
-cd bastion
+# リポジトリをクローン
+git clone https://github.com/t-ishitsuka/bastion-core.git
+cd bastion-core
+
+# 環境チェック
+go run ./cmd/bastion doctor
+
+# ビルド
 go build -o bastion ./cmd/bastion
 
-# パスに追加
+# パスに追加（オプション）
 mv bastion /usr/local/bin/
 ```
 
 ## 使い方
+
+### 環境チェック
+
+```bash
+# 必須 CLI ツールの確認
+bastion doctor
+```
+
+doctor コマンドは以下をチェックします:
+
+- claude CLI のインストール状況
+- tmux のインストール状況とバージョン
+- git のインストール状況とバージョン
+- Go のバージョン（1.22 以上が必要）
+
+### セッション管理（未実装）
+
+以下のコマンドは今後実装予定です:
 
 ```bash
 # セッション起動
