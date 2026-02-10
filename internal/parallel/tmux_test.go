@@ -1,6 +1,7 @@
 package parallel
 
 import (
+	"os"
 	"os/exec"
 	"testing"
 	"time"
@@ -8,6 +9,10 @@ import (
 
 // tmux が利用可能かチェック
 func isTmuxAvailable() bool {
+	// CI環境ではtmuxテストをスキップ（PTYがないため）
+	if os.Getenv("CI") != "" {
+		return false
+	}
 	cmd := exec.Command("tmux", "-V")
 	return cmd.Run() == nil
 }

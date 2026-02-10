@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"os"
 	"os/exec"
 	"testing"
 
@@ -10,6 +11,10 @@ import (
 
 // tmux が利用可能かチェック
 func isTmuxAvailableForCmd() bool {
+	// CI環境ではtmuxテストをスキップ（PTYがないため）
+	if os.Getenv("CI") != "" {
+		return false
+	}
 	cmd := exec.Command("tmux", "-V")
 	return cmd.Run() == nil
 }
