@@ -11,8 +11,8 @@ const (
 	SessionName = "bastion"
 
 	// ウィンドウ名
-	WindowEnvoy      = "envoy"
-	WindowMarshall   = "marshall"
+	WindowEnvoy       = "envoy"
+	WindowMarshall    = "marshall"
 	WindowSpecialists = "specialists"
 )
 
