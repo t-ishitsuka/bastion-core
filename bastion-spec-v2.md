@@ -591,17 +591,17 @@ description: Go JWT認証の実装
 
 ## 実装フェーズ
 
-### Phase 0: 環境検証
+### Phase 0: 環境検証 [完了]
 
-- [ ] `bastion doctor` コマンド（必須 CLI の存在確認）
-- [ ] プロジェクト構造の確立（cmd/bastion, internal/）
+- [x] `bastion doctor` コマンド（必須 CLI の存在確認）
+- [x] プロジェクト構造の確立（cmd/bastion, internal/）
 
-### Phase 1: 基盤（MVP）
+### Phase 1: 基盤（MVP）[完了]
 
-- [ ] Go で通信層実装（inbox / watcher）
-- [ ] tmux セッション管理
-- [ ] Envoy → Marshall → Specialist 通信
-- [ ] 基本 CLI（start, status）
+- [x] Go で通信層実装（inbox / watcher）
+- [x] tmux セッション管理
+- [x] 基本 CLI（start, status, stop）
+- [x] Envoy → Marshall → Specialist 通信
 
 ### Phase 2: 並列実行
 

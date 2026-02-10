@@ -10,7 +10,7 @@ import (
 var rootCmd = &cobra.Command{
 	Use:   "bastion",
 	Short: "Bastion - Claude Code マルチエージェントオーケストレーター",
-	Long: `Bastion は「一人開発会社」を実現する Claude Code マルチエージェントオーケストレーターです。`,
+	Long:  `Bastion は「一人開発会社」を実現する Claude Code マルチエージェントオーケストレーターです。`,
 }
 
 // ルートコマンドを実行

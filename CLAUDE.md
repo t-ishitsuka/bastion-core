@@ -24,8 +24,9 @@
 
 **コード変更時は必ず関連ドキュメントを同時更新する**
 
-- 新機能実装 → README.md, CLAUDE.md を即座に更新
+- 新機能実装 → README.md, CLAUDE.md, bastion-spec-v2.md を即座に更新
 - コマンド追加 → コマンド一覧表、使用例を同時に更新
+- フェーズ完了 → bastion-spec-v2.md のチェックボックスを更新
 - 仕様変更 → docs/ 配下のファイルを同時に更新
 - 実装とドキュメントの不一致は厳禁
 
@@ -118,12 +119,14 @@ bastion doctor
 ```
 
 チェック項目:
+
 - claude CLI の存在確認
 - tmux の存在確認とバージョン表示
 - git の存在確認とバージョン表示
 - Go バージョンチェック（1.22 以上）
 
 実装ファイル:
+
 - `cmd/bastion/main.go` - エントリーポイント
 - `cmd/bastion/cmd/root.go` - cobra ルートコマンド
 - `cmd/bastion/cmd/doctor.go` - doctor コマンド実装
@@ -217,9 +220,30 @@ inbox.Write("marshall", "新規タスク割当", TypeTaskAssigned, "envoy")
 
 ### ドキュメントコメント
 
-- 関数名を繰り返さない
-- 良い例: `// 正しくパスを返すかテストする`
-- 悪い例: `// TestGetPaths は GetPaths 関数が正しくパスを返すかテストする`
+**絶対に守るべきルール: 関数名・型名を繰り返さない**
+
+コメントの最初に関数名・型名を含めない。動作や目的だけを記述する。
+
+良い例:
+
+```go
+// メッセージを inbox に書き込む
+func (m *InboxManager) Write(...) { ... }
+```
+
+悪い例（これらはすべて規約違反）:
+
+```go
+// Write はメッセージを inbox に書き込む
+func (m *InboxManager) Write(...) { ... }
+
+```
+
+チェック方法:
+
+- コメントの最初の単語が関数名・型名と一致していないか確認
+- 「〜は」「〜を」で始まるコメントは OK
+- 名前で始まるコメントは NG
 
 ### ターミナルUI
 

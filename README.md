@@ -1,5 +1,8 @@
 # Bastion
 
+[![Test](https://github.com/t-ishitsuka/bastion-core/actions/workflows/test.yml/badge.svg)](https://github.com/t-ishitsuka/bastion-core/actions/workflows/test.yml)
+[![Go Version](https://img.shields.io/badge/Go-1.22+-00ADD8?logo=go)](https://go.dev/)
+
 > 「一人開発会社」を実現する Claude Code マルチエージェントオーケストレーター
 
 ## 概要
@@ -89,6 +92,67 @@ go build -o bastion ./cmd/bastion
 # パスに追加（オプション）
 mv bastion /usr/local/bin/
 ```
+
+## 実装状況
+
+### Phase 0: 環境検証 [完了]
+
+- bastion doctor コマンド実装
+- プロジェクト構造確立（cmd/bastion, internal/）
+- カラー出力対応（terminal パッケージ）
+- テストコード完備
+
+### Phase 1: 基盤（MVP）[完了]
+
+- [x] 通信層実装
+  - InboxManager（メッセージ読み書き）
+  - CommandQueueManager（指令管理）
+  - Watcher（fsnotify によるファイル監視）
+  - カバレッジ: 84.4%
+- [x] tmux セッション管理
+  - SessionManager（セッション・ウィンドウ・ペイン管理）
+  - セッション作成・停止・状態確認
+  - send-keys によるコマンド送信
+  - 全 10 テストパス、カバレッジ: 69.9%
+- [x] 基本 CLI（start, status, stop）
+  - `bastion start`: セッション起動
+  - `bastion status`: 状態確認
+  - `bastion stop`: セッション停止
+  - 全 7 テストパス、カバレッジ: 43.0%
+- [x] Envoy → Marshall → Specialist 通信
+  - Orchestrator（エージェント管理）
+  - 各エージェント用 CLAUDE.md（envoy, marshall, specialist）
+  - 自動起動: `bastion start` で claude が各ウィンドウで起動
+  - 役割分担: Envoy（対話）→ Marshall（管理）→ Specialists（実行）
+
+**全体カバレッジ: 72.3%** （目標 50% 超え）
+
+## 使い方
+
+```bash
+# Bastion セッションを起動
+$ bastion start
+
+# セッションにアタッチ（各エージェントで Claude Code が動作中）
+$ tmux attach -t bastion
+
+# セッション内の操作:
+# - Window 0 (envoy): ユーザーとの対話窓口
+# - Window 1 (marshall): タスク管理・並列実行制御
+# - Window 2 (specialists): 専門タスク実行（2ペイン）
+
+# セッションをデタッチ: Ctrl+B → D
+
+# セッション状態確認
+$ bastion status
+
+# セッション停止
+$ bastion stop
+```
+
+### Phase 2-4: 実装予定
+
+詳細は [bastion-spec-v2.md](bastion-spec-v2.md) を参照してください。
 
 ## 使い方
 
@@ -234,6 +298,29 @@ knowledge/
 - Envoy は即座に委譲してユーザー入力を待てる状態に戻る
 - Marshall がバックグラウンドで並列処理を管理
 - 完了すると知識として蓄積され、次回以降に活用
+
+## 開発
+
+### テスト実行
+
+```bash
+# すべてのテストを実行
+go test ./...
+
+# カバレッジ付きテスト
+go test -v -race -coverprofile=coverage.out ./...
+go tool cover -func=coverage.out
+```
+
+### CI/CD
+
+GitHub Actions で自動的に以下が実行されます:
+
+- テスト（カバレッジ閾値: 25% 以上必須、50% 以上推奨）
+- golangci-lint による静的解析
+- ビルド検証
+
+ワークフロー: `.github/workflows/test.yml`
 
 ## 参考
 
