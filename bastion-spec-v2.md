@@ -599,7 +599,7 @@ description: Go JWT認証の実装
 ### Phase 1: 基盤（MVP）
 
 - [x] Go で通信層実装（inbox / watcher）
-- [ ] tmux セッション管理
+- [x] tmux セッション管理
 - [ ] Envoy → Marshall → Specialist 通信
 - [ ] 基本 CLI（start, status）
 

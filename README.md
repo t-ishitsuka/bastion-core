@@ -102,7 +102,24 @@ mv bastion /usr/local/bin/
 - カラー出力対応（terminal パッケージ）
 - テストコード完備
 
-### Phase 1-4: 実装予定
+### Phase 1: 基盤（MVP）[進行中]
+
+- [x] 通信層実装
+  - InboxManager（メッセージ読み書き）
+  - CommandQueueManager（指令管理）
+  - Watcher（fsnotify によるファイル監視）
+  - カバレッジ: 83.0%
+- [x] tmux セッション管理
+  - SessionManager（セッション・ウィンドウ・ペイン管理）
+  - セッション作成・停止・状態確認
+  - send-keys によるコマンド送信
+  - 全 10 テストパス、カバレッジ: 78.1%
+- [ ] Envoy → Marshall → Specialist 通信
+- [ ] 基本 CLI（start, status）
+
+**全体カバレッジ: 71.0%** （目標 50% 超え）
+
+### Phase 2-4: 実装予定
 
 詳細は [bastion-spec-v2.md](bastion-spec-v2.md) を参照してください。
 
