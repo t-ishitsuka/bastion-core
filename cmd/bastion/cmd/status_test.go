@@ -13,12 +13,12 @@ func TestStatusCommand_SessionRunning(t *testing.T) {
 	}
 
 	sm := parallel.NewSessionManager()
+	defer cleanupSession(t, sm)
 
 	// セッションを作成
 	if err := parallel.SetupBastionSession(); err != nil {
 		t.Fatalf("failed to setup session: %v", err)
 	}
-	defer sm.KillSession()
 
 	// status コマンドを実行
 	err := runStatus(&cobra.Command{}, []string{})

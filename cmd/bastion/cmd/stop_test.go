@@ -13,6 +13,7 @@ func TestStopCommand_SessionRunning(t *testing.T) {
 	}
 
 	sm := parallel.NewSessionManager()
+	defer cleanupSession(t, sm)
 
 	// セッションを作成
 	if err := parallel.SetupBastionSession(); err != nil {

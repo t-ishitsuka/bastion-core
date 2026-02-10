@@ -19,12 +19,22 @@ func isTmuxAvailableForCmd() bool {
 	return cmd.Run() == nil
 }
 
+// テスト後のクリーンアップ
+func cleanupSession(t *testing.T, sm *parallel.SessionManager) {
+	if exists, _ := sm.SessionExists(); exists {
+		if err := sm.KillSession(); err != nil {
+			t.Logf("cleanup warning: failed to kill session: %v", err)
+		}
+	}
+}
+
 func TestStartCommand(t *testing.T) {
 	if !isTmuxAvailableForCmd() {
 		t.Skip("tmux is not available")
 	}
 
 	sm := parallel.NewSessionManager()
+	defer cleanupSession(t, sm)
 
 	// 既存セッションをクリーンアップ
 	if exists, _ := sm.SessionExists(); exists {
@@ -45,9 +55,6 @@ func TestStartCommand(t *testing.T) {
 	if !exists {
 		t.Error("session should exist after start command")
 	}
-
-	// クリーンアップ
-	_ = sm.KillSession()
 }
 
 func TestStartCommand_AlreadyRunning(t *testing.T) {
@@ -56,12 +63,12 @@ func TestStartCommand_AlreadyRunning(t *testing.T) {
 	}
 
 	sm := parallel.NewSessionManager()
+	defer cleanupSession(t, sm)
 
 	// セッションを作成
 	if err := parallel.SetupBastionSession(); err != nil {
 		t.Fatalf("failed to setup session: %v", err)
 	}
-	defer sm.KillSession()
 
 	// start コマンドを再度実行（既存セッションを削除して再作成される）
 	err := runStart(&cobra.Command{}, []string{})

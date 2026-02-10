@@ -7,12 +7,19 @@ import (
 	"time"
 )
 
+// テスト後のクリーンアップ
+func cleanupWatcher(t *testing.T, watcher *Watcher) {
+	if err := watcher.Stop(); err != nil {
+		t.Logf("cleanup warning: failed to stop watcher: %v", err)
+	}
+}
+
 func TestNewWatcher(t *testing.T) {
 	watcher, err := NewWatcher()
 	if err != nil {
 		t.Fatalf("failed to create watcher: %v", err)
 	}
-	defer watcher.Stop()
+	defer cleanupWatcher(t, watcher)
 
 	if watcher.watcher == nil {
 		t.Error("watcher.watcher should not be nil")
@@ -33,7 +40,7 @@ func TestWatcher_Watch(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create watcher: %v", err)
 	}
-	defer watcher.Stop()
+	defer cleanupWatcher(t, watcher)
 
 	tmpDir := t.TempDir()
 
@@ -48,7 +55,7 @@ func TestWatcher_FileChangeDetection(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create watcher: %v", err)
 	}
-	defer watcher.Stop()
+	defer cleanupWatcher(t, watcher)
 
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "test.txt")
@@ -154,7 +161,7 @@ func TestWatchInbox(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to watch inbox: %v", err)
 	}
-	defer watcher.Stop()
+	defer cleanupWatcher(t, watcher)
 
 	// inbox ディレクトリ内でファイルを更新
 	testFile := filepath.Join(inboxDir, "test.yaml")
