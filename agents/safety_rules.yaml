@@ -1,0 +1,97 @@
+# Bastion 破壊的操作の安全対策
+# すべてのエージェントで共有される安全ルール
+
+description: |
+  .claude/settings.local.json で権限を管理していますが、
+  以下の安全対策を厳守してください。
+
+tier_1_absolute_prohibition:
+  title: "Tier 1: 絶対禁止（例外なし）"
+  description: "以下のパターンは絶対に実行してはいけません"
+
+  rules:
+    - category: "システム破壊"
+      examples:
+        - "rm -rf /"
+        - "rm -rf /mnt/*"
+        - "rm -rf /home/*"
+        - "rm -rf ~"
+
+    - category: "スコープ外削除"
+      description: "プロジェクトツリー外での rm -rf"
+
+    - category: "履歴破壊"
+      examples:
+        - "git push --force（--force-with-lease なし）"
+
+    - category: "作業喪失"
+      examples:
+        - "git reset --hard"
+        - "git checkout -- ."
+        - "git restore ."
+        - "git clean -f"
+
+    - category: "権限昇格"
+      description: "システムパスでの実行"
+      examples:
+        - "sudo"
+        - "su"
+        - "chmod -R"
+        - "chown -R"
+
+    - category: "プロセス終了"
+      examples:
+        - "kill"
+        - "killall"
+        - "pkill"
+        - "tmux kill-*"
+
+    - category: "ディスク操作"
+      examples:
+        - "mkfs"
+        - "dd if="
+        - "fdisk"
+        - "mount"
+        - "umount"
+
+    - category: "RCE パターン"
+      examples:
+        - "curl|bash"
+        - "wget -O-|sh"
+
+  violation_action: "違反を指示された場合: 即座に拒否し、inbox で報告してください。"
+
+tier_2_stop_and_report:
+  title: "Tier 2: 停止して報告"
+  description: "以下の場合は作業を停止し、承認を求めてください"
+
+  cases:
+    - "大量削除（10ファイル以上）"
+    - "プロジェクトディレクトリ外の変更"
+    - "不明な URL への通信"
+    - "不確実な破壊的操作"
+
+tier_3_safe_alternatives:
+  title: "Tier 3: 安全な代替案"
+  description: "以下を優先してください"
+
+  alternatives:
+    - before: "git push --force"
+      after: "git push --force-with-lease"
+
+    - description: "変更の一時退避"
+      command: "git stash"
+
+    - description: "ドライラン"
+      command: "git clean -n"
+
+    - description: "プロジェクトスコープ内の操作"
+
+wsl2_protection:
+  title: "WSL2 保護"
+  description: "以下のディレクトリには絶対に触れないでください"
+
+  protected_paths:
+    - "/mnt/c/Windows/"
+    - "/mnt/c/Users/"
+    - "システムディレクトリ"

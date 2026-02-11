@@ -1,0 +1,346 @@
+# Bastion データ構造定義
+# すべてのエージェントで共有されるフォーマット仕様
+
+# 指令フォーマット（Envoy → Marshall）
+command:
+  description: |
+    Envoy が Marshall に送信する指令。
+    queue/tasks/<id>.yaml に個別ファイルとして保存される。
+
+  fields:
+    id:
+      type: string
+      required: true
+      description: "一意な指令ID（例: cmd_001）"
+      example: "cmd_001"
+
+    timestamp:
+      type: string
+      required: true
+      description: "指令作成時刻（ISO 8601形式）"
+      example: "2026-02-10T16:00:00"
+
+    purpose:
+      type: string
+      required: true
+      description: "目的（what）- 達成すべき状態を記述"
+      example: "JWT 認証が動作する"
+
+    acceptance_criteria:
+      type: array
+      required: true
+      description: "完了条件（検証可能な基準）"
+      example:
+        - "POST /auth/login が JWT を返す"
+        - "protected endpoint が JWT 検証する"
+        - "テストがパスする"
+
+    command:
+      type: string
+      required: true
+      description: "詳細な指示内容"
+      example: |
+        JWT認証を実装
+        - ログインエンドポイント作成
+        - ミドルウェア実装
+        - テスト作成
+
+    project:
+      type: string
+      required: false
+      description: "対象プロジェクト名"
+      example: "api-server"
+
+    priority:
+      type: string
+      required: false
+      description: "優先度（high/medium/low）"
+      example: "high"
+
+    status:
+      type: string
+      required: true
+      description: "状態（pending/in_progress/completed/failed）"
+      example: "pending"
+
+  example_yaml: |
+    id: cmd_001
+    timestamp: "2026-02-10T16:00:00"
+    purpose: "JWT 認証が動作する"
+    acceptance_criteria:
+      - "POST /auth/login が JWT を返す"
+      - "protected endpoint が JWT 検証する"
+      - "テストがパスする"
+    command: |
+      JWT認証を実装
+      - ログインエンドポイント作成
+      - ミドルウェア実装
+      - テスト作成
+    project: api-server
+    priority: high
+    status: pending
+
+# タスクフォーマット（Marshall → Specialist）
+task:
+  description: |
+    Marshall が Specialist に割り当てるタスク。
+    queue/tasks/specialist_<id>.yaml として保存される。
+
+  fields:
+    task_id:
+      type: string
+      required: true
+      description: "タスクID"
+      example: "task_001"
+
+    specialist_id:
+      type: string
+      required: true
+      description: "割り当て先 Specialist"
+      example: "specialist_1"
+
+    command_id:
+      type: string
+      required: true
+      description: "元の指令ID"
+      example: "cmd_001"
+
+    objective:
+      type: string
+      required: true
+      description: "このタスクの目的"
+      example: "ログインエンドポイントを実装"
+
+    deliverables:
+      type: array
+      required: true
+      description: "成果物"
+      example:
+        - "POST /auth/login エンドポイント"
+        - "JWT トークン発行機能"
+        - "ユニットテスト"
+
+    context:
+      type: string
+      required: false
+      description: "背景情報・制約"
+      example: "既存の User モデルを使用"
+
+    dependencies:
+      type: array
+      required: false
+      description: "依存タスクID"
+      example: ["task_000"]
+
+    status:
+      type: string
+      required: true
+      description: "状態（pending/in_progress/completed/failed）"
+      example: "pending"
+
+  example_yaml: |
+    task_id: task_001
+    specialist_id: specialist_1
+    command_id: cmd_001
+    objective: "ログインエンドポイントを実装"
+    deliverables:
+      - "POST /auth/login エンドポイント"
+      - "JWT トークン発行機能"
+      - "ユニットテスト"
+    context: "既存の User モデルを使用"
+    dependencies: []
+    status: pending
+
+# メッセージフォーマット（inbox での通信）
+message:
+  description: |
+    エージェント間の通知メッセージ。
+    queue/inbox/<agent>.yaml に追記される。
+
+  fields:
+    id:
+      type: string
+      required: true
+      description: "メッセージID（UUID）"
+      example: "msg_001"
+
+    timestamp:
+      type: string
+      required: true
+      description: "メッセージ作成時刻（ISO 8601形式）"
+      example: "2026-02-10T16:00:00"
+
+    from:
+      type: string
+      required: true
+      description: "送信元エージェント"
+      example: "envoy"
+
+    to:
+      type: string
+      required: true
+      description: "送信先エージェント"
+      example: "marshall"
+
+    type:
+      type: string
+      required: true
+      description: "メッセージタイプ（task_assigned/task_completed/notification）"
+      example: "task_assigned"
+
+    content:
+      type: string
+      required: true
+      description: "メッセージ本文"
+      example: "新しい指令 cmd_001 を確認してください"
+
+    status:
+      type: string
+      required: true
+      description: "状態（pending/processed）"
+      example: "pending"
+
+  example_yaml: |
+    id: msg_001
+    timestamp: "2026-02-10T16:00:00"
+    from: envoy
+    to: marshall
+    type: task_assigned
+    content: "新しい指令 cmd_001 を確認してください"
+    status: pending
+
+# レポートフォーマット（Specialist → Marshall）
+report:
+  description: |
+    Specialist が Marshall に送信する完了報告。
+    queue/reports/specialist_<id>_report.yaml として保存される。
+
+  fields:
+    task_id:
+      type: string
+      required: true
+      description: "完了したタスクID"
+      example: "task_001"
+
+    specialist_id:
+      type: string
+      required: true
+      description: "報告元 Specialist"
+      example: "specialist_1"
+
+    status:
+      type: string
+      required: true
+      description: "完了状態（completed/failed）"
+      example: "completed"
+
+    deliverables:
+      type: array
+      required: true
+      description: "提出した成果物"
+      example:
+        - "src/auth/login.go"
+        - "src/auth/login_test.go"
+
+    summary:
+      type: string
+      required: true
+      description: "作業内容の要約"
+      example: "ログインエンドポイントを実装し、テストを追加しました"
+
+    issues:
+      type: array
+      required: false
+      description: "発生した問題や注意事項"
+      example: []
+
+    timestamp:
+      type: string
+      required: true
+      description: "報告時刻（ISO 8601形式）"
+      example: "2026-02-10T17:00:00"
+
+  example_yaml: |
+    task_id: task_001
+    specialist_id: specialist_1
+    status: completed
+    deliverables:
+      - "src/auth/login.go"
+      - "src/auth/login_test.go"
+    summary: "ログインエンドポイントを実装し、テストを追加しました"
+    issues: []
+    timestamp: "2026-02-10T17:00:00"
+
+# 評価フォーマット（Marshall による品質評価）
+evaluation:
+  description: |
+    Marshall が Specialist の完了報告を評価する際のフォーマット。
+    品質スコア、発見した問題、抽出した知識を記録する。
+
+  fields:
+    task_id:
+      type: string
+      required: true
+      description: "評価対象のタスクID"
+      example: "subtask_001"
+
+    evaluator:
+      type: string
+      required: true
+      description: "評価者（通常は marshall）"
+      example: "marshall"
+
+    timestamp:
+      type: string
+      required: true
+      description: "評価時刻（ISO 8601形式）"
+      example: "2026-02-10T17:30:00"
+
+    scores:
+      type: object
+      required: true
+      description: "品質スコア（各項目1-5）"
+      fields:
+        correctness:
+          type: integer
+          description: "要件充足度（1-5）"
+          example: 5
+        code_quality:
+          type: integer
+          description: "コード品質（1-5）"
+          example: 4
+        efficiency:
+          type: integer
+          description: "実行効率（1-5）"
+          example: 4
+
+    issues_found:
+      type: array
+      required: false
+      description: "発見した問題や改善点"
+      example: []
+
+    knowledge_extracted:
+      type: array
+      required: false
+      description: "抽出した知識（パターン・教訓）"
+      example:
+        - type: pattern
+          content: "Go JWT実装では github.com/golang-jwt/jwt/v5 を使用"
+        - type: lesson
+          content: "ミドルウェアテストは httptest.NewRecorder で統一"
+
+  example_yaml: |
+    task_id: subtask_001
+    evaluator: marshall
+    timestamp: "2026-02-10T17:30:00"
+    scores:
+      correctness: 5
+      code_quality: 4
+      efficiency: 4
+    issues_found: []
+    knowledge_extracted:
+      - type: pattern
+        content: "Go JWT実装では github.com/golang-jwt/jwt/v5 を使用"
+      - type: lesson
+        content: "ミドルウェアテストは httptest.NewRecorder で統一"

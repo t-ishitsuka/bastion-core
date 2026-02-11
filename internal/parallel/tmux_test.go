@@ -268,7 +268,8 @@ func TestSetupBastionSession(t *testing.T) {
 		t.Fatalf("failed to list windows: %v", err)
 	}
 
-	expectedWindows := []string{WindowEnvoy, WindowMarshall, WindowSpecialists}
+	// 新しいレイアウトでは "main" と "specialists" の2つのウィンドウ
+	expectedWindows := []string{"main", WindowSpecialists}
 	for _, expected := range expectedWindows {
 		found := false
 		for _, w := range windows {
@@ -280,6 +281,15 @@ func TestSetupBastionSession(t *testing.T) {
 		if !found {
 			t.Errorf("expected window %s not found in list: %v", expected, windows)
 		}
+	}
+
+	// main ウィンドウに3つのペイン（Envoy, Watcher, Marshall）があることを確認
+	panes, err := sm.ListPanes("main")
+	if err != nil {
+		t.Fatalf("failed to list panes: %v", err)
+	}
+	if len(panes) != 3 {
+		t.Errorf("expected 3 panes in main window, got %d", len(panes))
 	}
 }
 

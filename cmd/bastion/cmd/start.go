@@ -3,6 +3,8 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"os/exec"
+	"syscall"
 
 	"github.com/spf13/cobra"
 	"github.com/t-ishitsuka/bastion-core/internal/orchestrator"
@@ -29,7 +31,7 @@ tmux セッションを作成し、以下のウィンドウを起動します:
 
 func init() {
 	rootCmd.AddCommand(startCmd)
-	startCmd.Flags().IntVarP(&specialists, "specialists", "s", 2, "Specialist エージェント数")
+	startCmd.Flags().IntVarP(&specialists, "specialists", "s", 4, "Specialist エージェント数")
 }
 
 func runStart(cmd *cobra.Command, args []string) error {
@@ -63,10 +65,10 @@ func runStart(cmd *cobra.Command, args []string) error {
 		terminal.PrintSuccess("✓ エージェントを起動しました")
 	}
 
-	// watcher を起動
+	// watcher ウィンドウで bastion watch を起動
 	terminal.PrintInfo("inbox 監視を開始しています...")
-	if err := orch.StartWatcher(); err != nil {
-		terminal.PrintWarning("watcher の起動に失敗: %v", err)
+	if err := orch.StartWatcherWindow(); err != nil {
+		terminal.PrintWarning("watcher ウィンドウの起動に失敗: %v", err)
 	} else {
 		terminal.PrintSuccess("✓ inbox 監視を開始しました")
 	}
@@ -86,13 +88,42 @@ func runStart(cmd *cobra.Command, args []string) error {
 
 	fmt.Println()
 	terminal.PrintSuccess("Bastion セッションが起動しました")
-	terminal.PrintInfo("セッションにアタッチ: tmux attach -t %s", parallel.SessionName)
-	terminal.PrintInfo("セッションを確認: bastion status")
 	fmt.Println()
 	terminal.PrintInfo("各エージェントで Claude Code が起動しています")
 	terminal.PrintInfo("Envoy: ユーザー対話窓口")
 	terminal.PrintInfo("Marshall: タスク管理")
 	terminal.PrintInfo("Specialists: タスク実行 (x%d)", specialists)
+	fmt.Println()
 
+	// テストモードでは tmux へのアタッチをスキップ
+	if os.Getenv("BASTION_TEST_MODE") == "1" {
+		terminal.PrintInfo("テストモード: tmux へのアタッチをスキップします")
+		return nil
+	}
+
+	terminal.PrintInfo("tmux セッションにアタッチしています...")
+
+	// tmux セッションにアタッチ（現在のプロセスを置き換え）
+	binary, err := exec.LookPath("tmux")
+	if err != nil {
+		terminal.PrintError("tmux が見つかりません: %v", err)
+		terminal.PrintInfo("手動でアタッチしてください: tmux attach -t %s", parallel.SessionName)
+		return err
+	}
+
+	tmuxArgs := []string{"tmux", "attach", "-t", parallel.SessionName}
+	env := os.Environ()
+
+	// 現在のプロセスを tmux attach に置き換える
+	// この呼び出しが成功すると、この関数は戻らない
+	err = syscall.Exec(binary, tmuxArgs, env)
+	if err != nil {
+		// エラーが発生した場合のみここに到達する
+		terminal.PrintError("tmux へのアタッチに失敗: %v", err)
+		terminal.PrintInfo("手動でアタッチしてください: tmux attach -t %s", parallel.SessionName)
+		return err
+	}
+
+	// syscall.Exec() が成功すると、ここには到達しない
 	return nil
 }

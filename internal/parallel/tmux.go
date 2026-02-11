@@ -14,6 +14,7 @@ const (
 	WindowEnvoy       = "envoy"
 	WindowMarshall    = "marshall"
 	WindowSpecialists = "specialists"
+	WindowWatcher     = "watcher"
 )
 
 // tmux セッションを管理
@@ -94,15 +95,32 @@ func (sm *SessionManager) SplitPaneVertical(window string) error {
 // コマンドを送信
 func (sm *SessionManager) SendKeys(target, keys string, enter bool) error {
 	fullTarget := fmt.Sprintf("%s:%s", sm.sessionName, target)
-	args := []string{"send-keys", "-t", fullTarget, keys}
-	if enter {
-		args = append(args, "Enter")
+
+	// 短い単語（スペースを含まない）の場合は -l フラグでリテラル送信
+	// シェルコマンド（スペースを含む）の場合は通常送信
+	var args []string
+	if !strings.Contains(keys, " ") && !strings.Contains(keys, "\t") {
+		// リテラルモード: inbox, /clear などの単純なテキスト
+		args = []string{"send-keys", "-t", fullTarget, "-l", keys}
+	} else {
+		// 通常モード: cd && claude などのシェルコマンド
+		args = []string{"send-keys", "-t", fullTarget, keys}
 	}
 
 	cmd := exec.Command("tmux", args...)
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to send keys: %w", err)
 	}
+
+	// Enter キーが必要な場合は別途送信
+	if enter {
+		enterArgs := []string{"send-keys", "-t", fullTarget, "Enter"}
+		enterCmd := exec.Command("tmux", enterArgs...)
+		if err := enterCmd.Run(); err != nil {
+			return fmt.Errorf("failed to send enter key: %w", err)
+		}
+	}
+
 	return nil
 }
 
@@ -148,6 +166,36 @@ func (sm *SessionManager) KillSession() error {
 	return nil
 }
 
+// ペインのサイズを変更
+func (sm *SessionManager) ResizePane(target string, size int) error {
+	fullTarget := fmt.Sprintf("%s:%s", sm.sessionName, target)
+	cmd := exec.Command("tmux", "resize-pane", "-t", fullTarget, "-x", fmt.Sprintf("%d%%", size))
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to resize pane: %w", err)
+	}
+	return nil
+}
+
+// ペインを選択
+func (sm *SessionManager) SelectPane(target string) error {
+	fullTarget := fmt.Sprintf("%s:%s", sm.sessionName, target)
+	cmd := exec.Command("tmux", "select-pane", "-t", fullTarget)
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to select pane: %w", err)
+	}
+	return nil
+}
+
+// tiled レイアウトを適用
+func (sm *SessionManager) SetTiledLayout(window string) error {
+	target := fmt.Sprintf("%s:%s", sm.sessionName, window)
+	cmd := exec.Command("tmux", "select-layout", "-t", target, "tiled")
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to set tiled layout: %w", err)
+	}
+	return nil
+}
+
 // Bastion セッションをセットアップ
 func SetupBastionSession() error {
 	sm := NewSessionManager()
@@ -159,18 +207,67 @@ func SetupBastionSession() error {
 		}
 	}
 
-	// セッション作成（envoy ウィンドウが自動作成される）
-	if err := sm.CreateSession(); err != nil {
+	// セッション作成（メインウィンドウが自動作成される）
+	// ウィンドウ名を "main" に設定
+	cmd := exec.Command("tmux", "new-session", "-d", "-s", sm.sessionName, "-n", "main")
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to create session: %w", err)
+	}
+
+	// ウィンドウ1（メイン）のレイアウトを作成
+	// 左: Envoy (50%)、右上: Watcher、右下: Marshall
+
+	// 水平分割で右側を作成（左右に分割）
+	if err := sm.SplitPaneHorizontal("main"); err != nil {
 		return err
 	}
 
-	// marshall ウィンドウを作成
-	if err := sm.CreateWindow(WindowMarshall); err != nil {
+	// 右側のペイン（pane 1）を選択して垂直分割（上下に分割）
+	if err := sm.SelectPane("main.1"); err != nil {
+		return err
+	}
+
+	if err := sm.SplitPaneVertical("main"); err != nil {
 		return err
 	}
 
 	// specialists ウィンドウを作成
 	if err := sm.CreateWindow(WindowSpecialists); err != nil {
+		return err
+	}
+
+	// 初期表示は Envoy ペイン（main.0）を選択
+	if err := sm.SelectPane("main.0"); err != nil {
+		return err
+	}
+
+	// main ウィンドウを選択（specialists ウィンドウではなく）
+	selectCmd := exec.Command("tmux", "select-window", "-t", fmt.Sprintf("%s:main", sm.sessionName))
+	if err := selectCmd.Run(); err != nil {
+		return fmt.Errorf("failed to select main window: %w", err)
+	}
+
+	return nil
+}
+
+// Specialists ウィンドウをグリッドレイアウトでセットアップ
+func SetupSpecialistsGrid(numSpecialists int) error {
+	sm := NewSessionManager()
+
+	if numSpecialists <= 1 {
+		// 1つだけの場合は分割不要
+		return nil
+	}
+
+	// 最初のペインは既に存在するので、残りを作成
+	for i := 1; i < numSpecialists; i++ {
+		if err := sm.SplitPaneHorizontal(WindowSpecialists); err != nil {
+			return err
+		}
+	}
+
+	// tiled レイアウトを適用してグリッド状に配置
+	if err := sm.SetTiledLayout(WindowSpecialists); err != nil {
 		return err
 	}
 

@@ -1,6 +1,7 @@
 package communication
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -31,10 +32,10 @@ func TestCommandQueueManager_Write(t *testing.T) {
 		t.Fatalf("Write failed: %v", err)
 	}
 
-	// ファイルが作成されたことを確認
-	commandPath := filepath.Join(tmpDir, "envoy_to_marshall.yaml")
-	if _, err := os.Stat(commandPath); os.IsNotExist(err) {
-		t.Fatalf("command file was not created: %s", commandPath)
+	// 個別ファイルが作成されたことを確認
+	taskPath := filepath.Join(tmpDir, "tasks", "cmd_001.yaml")
+	if _, err := os.Stat(taskPath); os.IsNotExist(err) {
+		t.Fatalf("task file was not created: %s", taskPath)
 	}
 
 	// 指令を読み込んで確認
@@ -113,12 +114,12 @@ func TestCommandQueueManager_ConcurrentWrites(t *testing.T) {
 	tmpDir := t.TempDir()
 	manager := NewCommandQueueManager(tmpDir)
 
-	// 並行して書き込みを行う
+	// 並行して書き込みを行う（異なる ID を使用）
 	done := make(chan bool)
 	for i := 0; i < 5; i++ {
 		go func(n int) {
 			cmd := Command{
-				ID:        "cmd_concurrent",
+				ID:        fmt.Sprintf("cmd_%d", n),
 				Timestamp: time.Now(),
 				Purpose:   "並行書き込みテスト",
 				Command:   "テスト",
@@ -142,5 +143,97 @@ func TestCommandQueueManager_ConcurrentWrites(t *testing.T) {
 
 	if len(commands) != 5 {
 		t.Fatalf("expected 5 commands, got %d", len(commands))
+	}
+}
+
+func TestCommandQueueManager_ReadByID(t *testing.T) {
+	tmpDir := t.TempDir()
+	manager := NewCommandQueueManager(tmpDir)
+
+	// 指令を書き込む
+	cmd := Command{
+		ID:        "cmd_test",
+		Timestamp: time.Now(),
+		Purpose:   "特定タスク取得テスト",
+		Command:   "テスト",
+		Status:    CommandStatusPending,
+	}
+
+	_ = manager.Write(cmd)
+
+	// ID で読み込む
+	readCmd, err := manager.ReadByID("cmd_test")
+	if err != nil {
+		t.Fatalf("ReadByID failed: %v", err)
+	}
+
+	if readCmd.ID != "cmd_test" {
+		t.Errorf("expected ID 'cmd_test', got '%s'", readCmd.ID)
+	}
+}
+
+func TestCommandQueueManager_UpdateStatus(t *testing.T) {
+	tmpDir := t.TempDir()
+	manager := NewCommandQueueManager(tmpDir)
+
+	// 指令を書き込む
+	cmd := Command{
+		ID:        "cmd_update",
+		Timestamp: time.Now(),
+		Purpose:   "状態更新テスト",
+		Command:   "テスト",
+		Status:    CommandStatusPending,
+	}
+
+	_ = manager.Write(cmd)
+
+	// 状態を更新
+	err := manager.UpdateStatus("cmd_update", CommandStatusInProgress)
+	if err != nil {
+		t.Fatalf("UpdateStatus failed: %v", err)
+	}
+
+	// 読み込んで確認
+	readCmd, err := manager.ReadByID("cmd_update")
+	if err != nil {
+		t.Fatalf("ReadByID failed: %v", err)
+	}
+
+	if readCmd.Status != CommandStatusInProgress {
+		t.Errorf("expected status 'in_progress', got '%s'", readCmd.Status)
+	}
+}
+
+func TestCommandQueueManager_Delete(t *testing.T) {
+	tmpDir := t.TempDir()
+	manager := NewCommandQueueManager(tmpDir)
+
+	// 指令を書き込む
+	cmd := Command{
+		ID:        "cmd_delete",
+		Timestamp: time.Now(),
+		Purpose:   "削除テスト",
+		Command:   "テスト",
+		Status:    CommandStatusPending,
+	}
+
+	_ = manager.Write(cmd)
+
+	// 削除
+	err := manager.Delete("cmd_delete")
+	if err != nil {
+		t.Fatalf("Delete failed: %v", err)
+	}
+
+	// 削除されたことを確認
+	_, err = manager.ReadByID("cmd_delete")
+	if err == nil {
+		t.Fatalf("expected error when reading deleted task")
+	}
+
+	// 存在しないタスクの削除はエラーにならない
+	err = manager.Delete("cmd_nonexistent")
+	if err != nil {
+		t.Fatalf("Delete of non-existent task should not error: %v", err)
 	}
 }
