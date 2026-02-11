@@ -5,13 +5,14 @@
 Bastion は Mailbox System を採用しています。
 
 ```
-queue/
-├── envoy_to_marshall.yaml   # Envoy → Marshall 指令
+agents/queue/
 ├── inbox/                   # メッセージボックス
+│   ├── envoy.yaml
 │   ├── marshall.yaml
 │   └── specialist_*.yaml
-├── tasks/                   # タスク詳細
-│   └── specialist_*.yaml
+├── tasks/                   # タスク定義（1タスク = 1ファイル）
+│   ├── <id>.yaml            # Envoy からの指令
+│   └── specialist_*.yaml    # Specialist へのタスク
 └── reports/                 # 完了報告
     └── specialist_*_report.yaml
 ```
@@ -24,7 +25,7 @@ queue/
 
 ```
 1. Sender: inbox.Write(target, message, msgType)
-2. System: queue/inbox/<target>.yaml に追記（sync.Mutex 排他）
+2. System: agents/queue/inbox/<target>.yaml に追記（sync.Mutex 排他）
 3. Watcher: fsnotify が変更検知 → tmux send-keys で nudge
 4. Receiver: inbox YAML を読み込み処理
 ```
@@ -48,7 +49,7 @@ inbox.Write("marshall", "タスク完了", TypeReportReceived, "specialist_1")
 ### inbox メッセージフォーマット
 
 ```yaml
-# queue/inbox/marshall.yaml
+# agents/queue/inbox/marshall.yaml
 - id: msg_001
   timestamp: "2026-02-08T10:00:00"
   from: envoy
@@ -68,10 +69,10 @@ inbox.Write("marshall", "タスク完了", TypeReportReceived, "specialist_1")
 ## 指令フォーマット（Envoy → Marshall）
 
 ```yaml
-# queue/envoy_to_marshall.yaml
-- id: cmd_001
-  timestamp: "2026-02-08T10:00:00"
-  purpose: "認証機能が JWT ベースで動作する"
+# agents/queue/tasks/<id>.yaml
+id: cmd_001
+timestamp: "2026-02-08T10:00:00"
+purpose: "認証機能が JWT ベースで動作する"
   acceptance_criteria:
     - "POST /auth/login が JWT を返す"
     - "protected endpoint が JWT 検証する"
@@ -102,7 +103,7 @@ inbox.Write("marshall", "タスク完了", TypeReportReceived, "specialist_1")
 ## タスクフォーマット（Marshall → Specialist）
 
 ```yaml
-# queue/tasks/specialist_1.yaml
+# agents/queue/tasks/specialist_1.yaml
 task_id: subtask_001
 parent_cmd: cmd_001
 assigned_to: specialist_1
@@ -137,7 +138,7 @@ blocked_by: [] # 完了を待つタスク
 ## レポートフォーマット（Specialist → Marshall）
 
 ```yaml
-# queue/reports/specialist_1_report.yaml
+# agents/queue/reports/specialist_1_report.yaml
 worker_id: specialist_1
 task_id: subtask_001
 parent_cmd: cmd_001

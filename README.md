@@ -43,7 +43,7 @@ User
 │  ・タスク分解（how の決定）                                   │
 │  ・Specialist 割当・並列実行管理                              │
 │  ・品質評価・知識抽出                                         │
-│  ・dashboard.md 更新（単一書き込み者）                        │
+│  ・agents/dashboard.md 更新（単一書き込み者）                        │
 └─────────────────────────────────────────────────────────────┘
                           │ inbox_write（並列）
             ┌─────────────┼─────────────┐
@@ -130,18 +130,21 @@ mv bastion /usr/local/bin/
 ## 使い方
 
 ```bash
-# Bastion セッションを起動
+# Bastion セッションを起動（自動的にセッションにアタッチされます）
 $ bastion start
 
-# セッションにアタッチ（各エージェントで Claude Code が動作中）
-$ tmux attach -t bastion
-
 # セッション内の操作:
-# - Window 0 (envoy): ユーザーとの対話窓口
-# - Window 1 (marshall): タスク管理・並列実行制御
-# - Window 2 (specialists): 専門タスク実行（2ペイン）
+# - Window 0 (main): メインウィンドウ
+#   - 左ペイン: Envoy (ユーザー対話窓口)
+#   - 右上ペイン: Watcher (inbox 監視)
+#   - 右下ペイン: Marshall (タスク管理)
+# - Window 1 (specialists): Specialist がグリッド配置
 
+# ウィンドウ切り替え: Ctrl+B → 0 or 1
 # セッションをデタッチ: Ctrl+B → D
+
+# デタッチ後に再接続
+$ bastion attach
 
 # セッション状態確認
 $ bastion status
@@ -197,7 +200,7 @@ Mailbox System を採用（Go で実装）:
 
 ```
 1. Sender: inbox.Write(target, message, type)
-2. System: queue/inbox/<target>.yaml に追記（sync.Mutex 排他）
+2. System: agents/queue/inbox/<target>.yaml に追記（sync.Mutex 排他）
 3. Watcher: fsnotify が変更検知 → tmux send-keys で nudge
 4. Receiver: inbox YAML を読み込み処理
 ```
@@ -233,13 +236,14 @@ Mailbox System を採用（Go で実装）:
 ## ディレクトリ構造
 
 ```
-queue/
-├── envoy_to_marshall.yaml      # Envoy → Marshall 指令
+agents/queue/
 ├── inbox/                      # メッセージボックス
+│   ├── envoy.yaml
 │   ├── marshall.yaml
 │   └── specialist_*.yaml
-├── tasks/                      # タスク詳細
-│   └── specialist_*.yaml
+├── tasks/                      # タスク定義（1タスク = 1ファイル）
+│   ├── <id>.yaml              # Envoy からの指令
+│   └── specialist_*.yaml      # Specialist へのタスク
 └── reports/                    # 完了報告
     └── specialist_*_report.yaml
 
@@ -287,7 +291,7 @@ knowledge/
 └────────────────────────────────────────────────────┘
                       │
                       ▼
-              dashboard.md 更新
+              agents/dashboard.md 更新
                       │
                       ▼
              Envoy がユーザーに報告

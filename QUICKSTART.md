@@ -55,8 +55,9 @@ Envoy:
    - POST /auth/login が JWT を返す
    - protected endpoint が JWT 検証する
    - テストがパスする
-3. queue/envoy_to_marshall.yaml に指令を書き込み
-4. 「Marshall に委譲しました」とユーザーに報告
+3. agents/queue/tasks/<id>.yaml に指令を書き込み（個別ファイル）
+4. agents/queue/inbox/marshall.yaml に通知メッセージを送信
+5. 「Marshall に委譲しました」とユーザーに報告
 ```
 
 ### Marshall (Window 1)
@@ -67,12 +68,12 @@ Envoy:
   - 依存関係を分析してスケジューリング
   - Specialists に並列でタスク割当
   - 完了時に品質評価・知識抽出
-  - dashboard.md を更新
+  - agents/dashboard.md を更新
 
 **ワークフロー**:
 
 ```
-1. queue/inbox/marshall.yaml を監視
+1. agents/queue/inbox/marshall.yaml を監視
 2. Envoy からの指令を読み取り
 3. タスクに分解:
    - subtask_001: JWT ミドルウェア実装
@@ -80,7 +81,7 @@ Envoy:
 4. Specialists に割当
 5. 完了報告を待つ
 6. 評価・知識抽出
-7. dashboard.md 更新
+7. agents/dashboard.md 更新
 ```
 
 ### Specialists (Window 2)
@@ -92,6 +93,7 @@ Envoy:
   - スキル候補の発見・報告
 
 **ペルソナ例**:
+
 - Senior Software Engineer
 - QA Engineer
 - Technical Writer
@@ -100,10 +102,10 @@ Envoy:
 **ワークフロー**:
 
 ```
-1. queue/tasks/specialist_N.yaml を読み取り
+1. agents/queue/tasks/specialist_N.yaml を読み取り
 2. ペルソナとして実装
 3. テスト実行
-4. queue/reports/specialist_N_report.yaml に報告
+4. agents/queue/reports/specialist_N_report.yaml に報告
 5. Marshall に完了通知
 ```
 
@@ -114,17 +116,17 @@ Envoy:
   │
   ▼
 Envoy (定義)
-  │ queue/envoy_to_marshall.yaml
+  │ agents/queue/tasks/<id>.yaml + agents/queue/inbox/marshall.yaml
   ▼
 Marshall (分解・割当)
-  │ queue/tasks/*.yaml
+  │ agents/queue/tasks/*.yaml
   ├─▶ Specialist 1
   ├─▶ Specialist 2
   └─▶ Specialist N
-  │ queue/reports/*.yaml
+  │ agents/queue/reports/*.yaml
   ▼
 Marshall (評価・統合)
-  │ dashboard.md
+  │ agents/dashboard.md
   ▼
 Envoy (報告)
   │
@@ -135,9 +137,9 @@ Envoy (報告)
 ## ファイル構造
 
 ```
-queue/
-├── envoy_to_marshall.yaml      # Envoy → Marshall 指令
+agents/queue/
 ├── inbox/
+│   ├── envoy.yaml              # Envoy 宛メッセージ
 │   ├── marshall.yaml           # Marshall 宛メッセージ
 │   └── specialist_*.yaml       # Specialist 宛メッセージ
 ├── tasks/
@@ -145,7 +147,7 @@ queue/
 └── reports/
     └── specialist_*_report.yaml # 完了報告
 
-dashboard.md                    # 進捗ダッシュボード（Marshall が更新）
+agents/dashboard.md                    # 進捗ダッシュボード（Marshall が更新）
 ```
 
 ## セッション管理
@@ -211,6 +213,6 @@ bastion start
 
 ```bash
 # 必要なディレクトリを作成
-mkdir -p queue/inbox queue/tasks queue/reports
-touch dashboard.md
+mkdir -p agents/queue/inbox agents/queue/tasks agents/queue/reports
+touch agents/dashboard.md
 ```

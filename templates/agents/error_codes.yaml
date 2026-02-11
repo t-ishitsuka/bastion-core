@@ -1,0 +1,114 @@
+# Bastion エラーコード定義
+# すべてのエージェントで共有される禁止事項のデータベース
+
+error_codes:
+  F001:
+    code: F001
+    title: "自らファイル操作を行う"
+    description: |
+      戦略的判断のみを行い、実装は Marshall → Specialist に委譲する。
+      スクリプトを書いてはいけない。
+      YAML ファイルは Write ツールで直接作成する。
+    severity: critical
+    applies_to:
+      - envoy
+      - marshall
+    examples:
+      violation:
+        - "Go スクリプトを書いて queue/tasks/ にタスクを作成する"
+        - "Python スクリプトでファイルを読み書きする"
+        - "Shell スクリプトで git 操作を実行する"
+      correct:
+        - "Write ツールで queue/tasks/<id>.yaml を直接作成する"
+        - "Marshall に「JWT 認証を実装」という指令を委譲する"
+
+  F002:
+    code: F002
+    title: "Specialist に直接指示する"
+    description: |
+      必ず Marshall を経由する。
+      Envoy は Specialist の存在を知らない。
+    severity: critical
+    applies_to:
+      - envoy
+    examples:
+      violation:
+        - "queue/tasks/specialist_1.yaml に直接タスクを書き込む"
+        - "Specialist に inbox メッセージを送信する"
+      correct:
+        - "queue/tasks/<id>.yaml に指令を書き込み、Marshall に通知する"
+        - "Marshall が Specialist への割り当てを決定する"
+
+  F004:
+    code: F004
+    title: "ポーリングループを実装する"
+    description: |
+      inbox 監視は外部の watcher が自動実行する。
+      while ループや setInterval などでポーリングしてはいけない。
+    severity: critical
+    applies_to:
+      - envoy
+      - marshall
+      - specialist
+    examples:
+      violation:
+        - "while True: check_inbox() のようなポーリングループ"
+        - "定期的に inbox をチェックするスクリプト"
+      correct:
+        - "inbox という nudge を受け取ったら inbox をチェックする"
+        - "外部 watcher が変更を検知して通知してくれる"
+
+  D001:
+    code: D001
+    title: "破壊的操作: システム破壊"
+    description: |
+      システムを破壊する操作は絶対禁止。
+    severity: critical
+    applies_to:
+      - envoy
+      - marshall
+      - specialist
+    examples:
+      violation:
+        - "rm -rf /"
+        - "rm -rf /home/*"
+        - "rm -rf /mnt/*"
+        - "システムパスでの sudo, chmod -R, chown -R"
+
+  D002:
+    code: D002
+    title: "破壊的操作: git 履歴破壊"
+    description: |
+      git の履歴を破壊する操作は禁止。
+      --force-with-lease を使用する。
+    severity: high
+    applies_to:
+      - marshall
+      - specialist
+    examples:
+      violation:
+        - "git push --force"
+        - "git reset --hard"
+        - "git clean -f"
+      correct:
+        - "git push --force-with-lease"
+        - "git stash"
+        - "git clean -n (ドライラン)"
+
+  D003:
+    code: D003
+    title: "破壊的操作: プロセス終了"
+    description: |
+      tmux セッションやプロセスを終了してはいけない。
+    severity: critical
+    applies_to:
+      - envoy
+      - marshall
+      - specialist
+    examples:
+      violation:
+        - "tmux kill-session"
+        - "tmux kill-server"
+        - "kill, killall, pkill"
+      correct:
+        - "bastion stop コマンドを使用する"

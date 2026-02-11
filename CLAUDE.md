@@ -78,11 +78,16 @@ bastion/
 │   │   └── worktree.go
 │   └── config/
 │       └── loader.go
-├── queue/                       # 通信ディレクトリ（実行時生成）
-│   ├── envoy_to_marshall.yaml
-│   ├── inbox/
-│   ├── tasks/
-│   └── reports/
+├── agents/queue/                       # 通信ディレクトリ（実行時生成）
+│   ├── inbox/                   # メッセージボックス
+│   │   ├── envoy.yaml
+│   │   ├── marshall.yaml
+│   │   └── specialist_*.yaml
+│   ├── tasks/                   # タスク定義（1タスク = 1ファイル）
+│   │   ├── <id>.yaml
+│   │   └── specialist_*.yaml
+│   └── reports/                 # 完了報告
+│       └── specialist_*_report.yaml
 └── knowledge/                   # 抽出された知識
     ├── patterns/
     └── lessons/
@@ -110,6 +115,28 @@ bastion/
 
 ### [実装済み] コマンド
 
+#### init
+
+プロジェクトに Bastion エージェント環境を初期化します。
+
+```bash
+bastion init
+```
+
+実行内容:
+
+- テンプレートから agents/ ディレクトリを作成
+- agents/queue/ ディレクトリ構造を作成（inbox/, tasks/, reports/）
+- .gitignore に agents/queue/ を追加
+
+既存のファイルは上書きせず、新しいファイルのみを追加します（--no-clobber モード）。
+
+実装ファイル:
+
+- `cmd/bastion/cmd/init.go` - init コマンド実装
+- `cmd/bastion/cmd/init_test.go` - テストコード
+- `templates/embed.go` - テンプレートファイルの埋め込み
+
 #### doctor
 
 環境チェックコマンド。必須 CLI ツールのインストール状況を確認します。
@@ -132,12 +159,86 @@ bastion doctor
 - `cmd/bastion/cmd/doctor.go` - doctor コマンド実装
 - `cmd/bastion/cmd/doctor_test.go` - テストコード
 
+#### attach
+
+tmux セッションにアタッチします。
+
+```bash
+bastion attach
+```
+
+実装ファイル:
+
+- `cmd/bastion/cmd/attach.go` - attach コマンド実装
+- `cmd/bastion/cmd/attach_test.go` - テストコード
+
+#### start
+
+Bastion マルチエージェントセッションを起動します。
+
+```bash
+bastion start [--specialists 2]
+```
+
+動作:
+
+- tmux セッションを作成（envoy, marshall, specialists, watcher ウィンドウ）
+- 各エージェントで Claude Code を起動
+- inbox 監視を開始
+- 自動的にセッションにアタッチ
+
+オプション:
+
+- `-s, --specialists` - Specialist エージェント数（デフォルト: 4）
+
+実装ファイル:
+
+- `cmd/bastion/cmd/start.go` - start コマンド実装
+- `internal/parallel/tmux.go` - tmux セッション管理
+- `internal/orchestrator/orchestrator.go` - エージェント起動制御
+
+#### attach
+
+既存の Bastion tmux セッションにアタッチします。
+
+```bash
+bastion attach
+```
+
+使用例:
+
+```bash
+# 初回起動
+bastion start
+
+# tmux からデタッチ後、再接続
+bastion attach
+```
+
+実装ファイル:
+
+- `cmd/bastion/cmd/attach.go` - attach コマンド実装
+
+#### watch
+
+inbox ディレクトリを監視し、ファイル変更を検知したらエージェントに通知します。
+
+```bash
+bastion watch
+```
+
+通常、bastion start によって自動的に起動されます。
+
+実装ファイル:
+
+- `cmd/bastion/cmd/watch.go` - watch コマンド実装
+- `internal/communication/watcher.go` - fsnotify によるファイル監視
+- `internal/orchestrator/orchestrator.go` - watcher イベント処理
+
 ### (未実装) コマンド
 
 以下のコマンドは今後実装予定:
 
-- `bastion init` - プロジェクトの初期化
-- `bastion start` - オーケストレーターの起動
 - `bastion stop` - オーケストレーターの停止
 - `bastion status` - 現在の状態確認
 - `bastion specialist add/list/remove` - Specialist 管理
@@ -158,7 +259,7 @@ Marshall
   ・タスク分解（how の決定）
   ・Specialist 割当・並列実行管理
   ・品質評価・知識抽出
-  ・dashboard.md 更新（単一書き込み者）
+  ・agents/dashboard.md 更新（単一書き込み者）
   │
   ▼
 Specialists x N
@@ -202,7 +303,7 @@ inbox.Write("marshall", "新規タスク割当", TypeTaskAssigned, "envoy")
 
 ### YAML ファイル
 
-- 通信ファイルは `queue/` ディレクトリに配置
+- 通信ファイルは `agents/queue/` ディレクトリに配置
 - 知識ファイルは `knowledge/` ディレクトリに配置
 - タイムスタンプは ISO 8601 形式（`time.Now().Format(time.RFC3339)`）
 
@@ -258,12 +359,37 @@ func (m *InboxManager) Write(...) { ... }
 
 ```
 Session: bastion
-├── Window 0: envoy (main branch)
-├── Window 1: marshall (main branch)
-└── Window 2: specialists
-    ├── Pane 0.1: specialist_1 (worktree: .worktrees/sp1)
-    ├── Pane 0.2: specialist_2 (worktree: .worktrees/sp2)
-    └── ...
+├── Window 0: main
+│   ├── Pane 0.0: Envoy (50% 幅)
+│   ├── Pane 0.1: Watcher (右上)
+│   └── Pane 0.2: Marshall (右下)
+└── Window 1: specialists (グリッドレイアウト)
+    ├── Pane 1.0: specialist_1
+    ├── Pane 1.1: specialist_2
+    ├── Pane 1.2: specialist_3
+    └── Pane 1.3: specialist_4 ...
+```
+
+レイアウト:
+
+ウィンドウ1（メイン）:
+
+```
+┌──────────────┬──────────┐
+│              │ Watcher  │
+│    Envoy     ├──────────┤
+│    (50%)     │ Marshall │
+└──────────────┴──────────┘
+```
+
+ウィンドウ2（Specialists）:
+
+```
+┌─────────────┬─────────────┐
+│Specialist 1 │Specialist 2 │
+├─────────────┼─────────────┤
+│Specialist 3 │Specialist 4 │
+└─────────────┴─────────────┘
 ```
 
 各 Specialist は独立した git worktree で作業し、ファイル競合を物理的に回避。

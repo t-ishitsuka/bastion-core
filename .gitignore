@@ -27,9 +27,9 @@ vendor/
 /dist/
 
 # Bastion 固有の実行時生成ファイル
-/queue/
+agents/queue/
+agents/dashboard.md
 /.worktrees/
-/dashboard.md
 /knowledge/
 
 # IDE/Editor

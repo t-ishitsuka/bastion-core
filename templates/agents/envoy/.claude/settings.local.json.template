@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Read({{PROJECT_ROOT}}/agents/queue/inbox/envoy.yaml)",
+      "Write({{PROJECT_ROOT}}/agents/queue/inbox/envoy.yaml)",
+      "Read({{PROJECT_ROOT}}/agents/queue/tasks/*.yaml)",
+      "Write({{PROJECT_ROOT}}/agents/queue/tasks/*.yaml)",
+      "Read({{PROJECT_ROOT}}/agents/queue/inbox/marshall.yaml)",
+      "Write({{PROJECT_ROOT}}/agents/queue/inbox/marshall.yaml)",
+      "Read({{PROJECT_ROOT}}/agents/dashboard.md)",
+      "Bash(cat:*)",
+      "Bash(ls:*)",
+      "Bash(pwd:*)",
+      "Bash(echo:*)",
+      "Bash(tmux list-sessions:*)",
+      "Bash(bastion status:*)"
+    ],
+    "deny": [
+      "Bash(rm:*)",
+      "Bash(git push --force:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(sudo:*)",
+      "Bash(kill:*)"
+    ]
+  }
+}

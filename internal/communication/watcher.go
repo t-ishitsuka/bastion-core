@@ -70,11 +70,22 @@ func (w *Watcher) eventLoop() {
 				return
 			}
 
-			// WRITE イベントのみを処理
+			// WRITE, CREATE, RENAME イベントを処理
+			// WSL2 環境では、エディタが rename 方式でファイルを保存することがある
 			if event.Has(fsnotify.Write) {
 				w.events <- FileEvent{
 					Path:      event.Name,
 					Operation: "write",
+				}
+			} else if event.Has(fsnotify.Create) {
+				w.events <- FileEvent{
+					Path:      event.Name,
+					Operation: "create",
+				}
+			} else if event.Has(fsnotify.Rename) {
+				w.events <- FileEvent{
+					Path:      event.Name,
+					Operation: "rename",
 				}
 			}
 
