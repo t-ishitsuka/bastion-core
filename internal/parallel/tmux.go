@@ -96,16 +96,9 @@ func (sm *SessionManager) SplitPaneVertical(window string) error {
 func (sm *SessionManager) SendKeys(target, keys string, enter bool) error {
 	fullTarget := fmt.Sprintf("%s:%s", sm.sessionName, target)
 
-	// 短い単語（スペースを含まない）の場合は -l フラグでリテラル送信
-	// シェルコマンド（スペースを含む）の場合は通常送信
-	var args []string
-	if !strings.Contains(keys, " ") && !strings.Contains(keys, "\t") {
-		// リテラルモード: inbox, /clear などの単純なテキスト
-		args = []string{"send-keys", "-t", fullTarget, "-l", keys}
-	} else {
-		// 通常モード: cd && claude などのシェルコマンド
-		args = []string{"send-keys", "-t", fullTarget, keys}
-	}
+	// exec.Command は引数を適切にエスケープするため、-l フラグは不要
+	// すべてのテキスト（シェルコマンドと単純なテキストの両方）を同じ方法で送信
+	args := []string{"send-keys", "-t", fullTarget, keys}
 
 	cmd := exec.Command("tmux", args...)
 	if err := cmd.Run(); err != nil {
@@ -147,6 +140,51 @@ func (sm *SessionManager) ListPanes(window string) ([]string, error) {
 
 	lines := strings.Split(strings.TrimSpace(string(output)), "\n")
 	return lines, nil
+}
+
+// ペインタイトルを設定（カスタム属性を使用して上書き防止）
+func (sm *SessionManager) SetPaneTitle(target, title string) error {
+	fullTarget := fmt.Sprintf("%s:%s", sm.sessionName, target)
+
+	// カスタムペイン属性を設定（アプリケーションに上書きされない）
+	cmd := exec.Command("tmux", "set-option", "-p", "-t", fullTarget, "@pane_label", title)
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to set pane label: %w", err)
+	}
+
+	return nil
+}
+
+// ペインボーダーの表示設定を有効化
+func (sm *SessionManager) EnablePaneBorders() error {
+	// ペインボーダーにタイトルを表示
+	cmd1 := exec.Command("tmux", "set-option", "-g", "pane-border-status", "top")
+	if err := cmd1.Run(); err != nil {
+		return fmt.Errorf("failed to enable pane border status: %w", err)
+	}
+
+	// ペインボーダーのフォーマットを設定（カスタム属性を使用）
+	// #{@pane_label} はアプリケーションに上書きされないカスタム属性
+	cmd2 := exec.Command("tmux", "set-option", "-g", "pane-border-format", " #{@pane_label} ")
+	if err := cmd2.Run(); err != nil {
+		return fmt.Errorf("failed to set pane border format: %w", err)
+	}
+
+	return nil
+}
+
+// カスタムキーバインドを設定
+func (sm *SessionManager) SetupKeyBindings(bastionCmd string) error {
+	// Ctrl+b q で確認付き停止
+	// confirm-before で "Stop Bastion session? (y/n)" を表示し、y で bastion stop を実行
+	cmd := exec.Command("tmux", "bind-key", "-T", "prefix", "q",
+		"confirm-before", "-p", "Stop Bastion session? (y/n)",
+		fmt.Sprintf("run-shell '%s stop'", bastionCmd))
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to set key binding: %w", err)
+	}
+
+	return nil
 }
 
 // セッションを停止

@@ -3,6 +3,7 @@ package orchestrator
 import (
 	"fmt"
 	"log"
+	"os"
 	"os/exec"
 	"path/filepath"
 
@@ -40,6 +41,28 @@ func NewOrchestrator(projectRoot string, specialistCount int) *Orchestrator {
 
 // すべてのエージェントを起動
 func (o *Orchestrator) StartAll() error {
+	// ペインボーダーを有効化してタイトルを表示
+	if err := o.sm.EnablePaneBorders(); err != nil {
+		log.Printf("warning: failed to enable pane borders: %v", err)
+	}
+
+	// bastion コマンドのパスを決定
+	// 1. プロジェクトルートの ./bastion をチェック（開発中）
+	// 2. パスに通っている bastion を探す
+	// 3. デフォルトで "bastion" を使用
+	bastionCmd := "bastion"
+	localBastion := filepath.Join(o.projectRoot, "bastion")
+	if _, err := os.Stat(localBastion); err == nil {
+		bastionCmd = localBastion
+	} else if path, err := exec.LookPath("bastion"); err == nil {
+		bastionCmd = path
+	}
+
+	// カスタムキーバインドを設定
+	if err := o.sm.SetupKeyBindings(bastionCmd); err != nil {
+		log.Printf("warning: failed to setup key bindings: %v", err)
+	}
+
 	// Envoy を起動（メインウィンドウの左ペイン）
 	if err := o.StartAgent(AgentEnvoy, "main.0", 0); err != nil {
 		return fmt.Errorf("failed to start envoy: %w", err)
@@ -71,6 +94,23 @@ func (o *Orchestrator) StartAll() error {
 func (o *Orchestrator) StartAgent(agentType, target string, index int) error {
 	// エージェントディレクトリのパスを構築
 	agentDir := filepath.Join(o.agentsDir, agentType)
+
+	// ペインラベルを設定（カスタム属性を使用するため上書きされない）
+	var label string
+	switch agentType {
+	case AgentEnvoy:
+		label = "Envoy (User Interface)"
+	case AgentMarshall:
+		label = "Marshall (Task Manager)"
+	case AgentSpecialist:
+		label = fmt.Sprintf("Specialist #%d", index)
+	default:
+		label = agentType
+	}
+
+	if err := o.sm.SetPaneTitle(target, label); err != nil {
+		log.Printf("warning: failed to set pane label: %v", err)
+	}
 
 	// claude コマンドを構築
 	// エージェントディレクトリに移動してから claude を起動
@@ -108,8 +148,9 @@ func (o *Orchestrator) WakeupAll() error {
 // 個別のエージェントを wakeup
 func (o *Orchestrator) Wakeup(agentType, target string) error {
 	// inbox チェックを促す具体的なメッセージを送信
-	// エージェントは "inbox" というメッセージを受け取ったら inbox をチェックする
-	if err := o.sm.SendKeys(target, "inbox", true); err != nil {
+	// "-l" フラグなしで送信することで、より自然な入力として処理される
+	message := "inbox"
+	if err := o.sm.SendKeys(target, message, true); err != nil {
 		return fmt.Errorf("failed to wakeup %s: %w", agentType, err)
 	}
 	return nil
@@ -219,13 +260,21 @@ func (o *Orchestrator) StopWatcher() error {
 
 // watcher ペインで bastion watch コマンドを起動
 func (o *Orchestrator) StartWatcherWindow() error {
+	// ペインラベルを設定（カスタム属性を使用するため上書きされない）
+	if err := o.sm.SetPaneTitle("main.1", "Watcher (Inbox Monitor)"); err != nil {
+		log.Printf("warning: failed to set watcher pane label: %v", err)
+	}
+
 	// bastion コマンドのパスを決定
-	// 1. パスに通っている bastion コマンドを確認
-	// 2. なければプロジェクトルートの ./bastion を使用
+	// 1. プロジェクトルートの ./bastion をチェック（開発中）
+	// 2. パスに通っている bastion を探す
+	// 3. デフォルトで "bastion" を使用
 	bastionCmd := "bastion"
-	if _, err := exec.LookPath("bastion"); err != nil {
-		// コマンドが見つからない場合、プロジェクトルートのバイナリを使用
-		bastionCmd = filepath.Join(o.projectRoot, "bastion")
+	localBastion := filepath.Join(o.projectRoot, "bastion")
+	if _, err := os.Stat(localBastion); err == nil {
+		bastionCmd = localBastion
+	} else if path, err := exec.LookPath("bastion"); err == nil {
+		bastionCmd = path
 	}
 
 	// bastion watch コマンドを構築
