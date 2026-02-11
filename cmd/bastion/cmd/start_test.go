@@ -28,14 +28,27 @@ func cleanupSession(t *testing.T, sm *parallel.SessionManager) {
 	}
 }
 
+// テスト用に環境変数を設定し、テスト後に元に戻す
+func setTestEnv(t *testing.T, key, value string) {
+	t.Helper()
+	oldValue := os.Getenv(key)
+	_ = os.Setenv(key, value)
+	t.Cleanup(func() {
+		if oldValue == "" {
+			_ = os.Unsetenv(key)
+		} else {
+			_ = os.Setenv(key, oldValue)
+		}
+	})
+}
+
 func TestStartCommand(t *testing.T) {
 	if !isTmuxAvailableForCmd() {
 		t.Skip("tmux is not available")
 	}
 
 	// テストモードを有効化
-	os.Setenv("BASTION_TEST_MODE", "1")
-	defer os.Unsetenv("BASTION_TEST_MODE")
+	setTestEnv(t, "BASTION_TEST_MODE", "1")
 
 	sm := parallel.NewSessionManager()
 	defer cleanupSession(t, sm)
@@ -67,8 +80,7 @@ func TestStartCommand_AlreadyRunning(t *testing.T) {
 	}
 
 	// テストモードを有効化
-	os.Setenv("BASTION_TEST_MODE", "1")
-	defer os.Unsetenv("BASTION_TEST_MODE")
+	setTestEnv(t, "BASTION_TEST_MODE", "1")
 
 	sm := parallel.NewSessionManager()
 	defer cleanupSession(t, sm)
