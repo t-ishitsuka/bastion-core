@@ -373,6 +373,7 @@ Session: bastion
 レイアウト:
 
 ウィンドウ1（メイン）:
+
 ```
 ┌──────────────┬──────────┐
 │              │ Watcher  │
@@ -382,6 +383,7 @@ Session: bastion
 ```
 
 ウィンドウ2（Specialists）:
+
 ```
 ┌─────────────┬─────────────┐
 │Specialist 1 │Specialist 2 │

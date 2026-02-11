@@ -93,6 +93,7 @@ Envoy:
   - スキル候補の発見・報告
 
 **ペルソナ例**:
+
 - Senior Software Engineer
 - QA Engineer
 - Technical Writer
