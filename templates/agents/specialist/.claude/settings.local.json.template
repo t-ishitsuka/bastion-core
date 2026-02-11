@@ -1,0 +1,40 @@
+{
+  "permissions": {
+    "allow": [
+      "Read({{PROJECT_ROOT}}/queue/inbox/specialist_*.yaml)",
+      "Write({{PROJECT_ROOT}}/queue/inbox/specialist_*.yaml)",
+      "Read({{PROJECT_ROOT}}/queue/tasks/specialist_*.yaml)",
+      "Read({{PROJECT_ROOT}}/queue/reports/specialist_*_report.yaml)",
+      "Write({{PROJECT_ROOT}}/queue/reports/specialist_*_report.yaml)",
+      "Read({{PROJECT_ROOT}}/queue/inbox/marshall.yaml)",
+      "Write({{PROJECT_ROOT}}/queue/inbox/marshall.yaml)",
+      "Read({{PROJECT_ROOT}}/**/*)",
+      "Write({{PROJECT_ROOT}}/**/*)",
+      "Bash(cat:*)",
+      "Bash(ls:*)",
+      "Bash(pwd:*)",
+      "Bash(echo:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(go test:*)",
+      "Bash(go build:*)",
+      "Bash(npm test:*)",
+      "Bash(npm run:*)",
+      "Bash(make:*)",
+      "Bash(cargo:*)"
+    ],
+    "deny": [
+      "Read({{PROJECT_ROOT}}/agents/**/*)",
+      "Write({{PROJECT_ROOT}}/agents/**/*)",
+      "Read({{PROJECT_ROOT}}/.git/**/*)",
+      "Write({{PROJECT_ROOT}}/.git/**/*)",
+      "Bash(rm:*)",
+      "Bash(git push --force:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(sudo:*)",
+      "Bash(kill:*)"
+    ]
+  }
+}

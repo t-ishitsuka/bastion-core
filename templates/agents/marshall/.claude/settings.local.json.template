@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Read({{PROJECT_ROOT}}/queue/inbox/marshall.yaml)",
+      "Write({{PROJECT_ROOT}}/queue/inbox/marshall.yaml)",
+      "Read({{PROJECT_ROOT}}/queue/tasks/*.yaml)",
+      "Write({{PROJECT_ROOT}}/queue/tasks/*.yaml)",
+      "Read({{PROJECT_ROOT}}/queue/inbox/specialist_*.yaml)",
+      "Write({{PROJECT_ROOT}}/queue/inbox/specialist_*.yaml)",
+      "Read({{PROJECT_ROOT}}/queue/reports/*.yaml)",
+      "Read({{PROJECT_ROOT}}/dashboard.md)",
+      "Write({{PROJECT_ROOT}}/dashboard.md)",
+      "Bash(cat:*)",
+      "Bash(ls:*)",
+      "Bash(pwd:*)",
+      "Bash(echo:*)"
+    ],
+    "deny": [
+      "Bash(rm:*)",
+      "Bash(git push --force:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(sudo:*)",
+      "Bash(kill:*)"
+    ]
+  }
+}
