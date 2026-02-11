@@ -19,7 +19,7 @@ User
 │  ・タスク分解（how の決定）                                   │
 │  ・Specialist 割当・並列実行管理                              │
 │  ・品質評価・知識抽出                                         │
-│  ・dashboard.md 更新（単一書き込み者）                        │
+│  ・agents/dashboard.md 更新（単一書き込み者）                        │
 └─────────────────────────────────────────────────────────────┘
                           │ inbox_write（並列）
             ┌─────────────┼─────────────┐
@@ -60,20 +60,21 @@ bastion/
 │   │   └── worktree.go          # git worktree 管理
 │   └── config/
 │       └── loader.go            # 設定読み込み
-├── queue/                       # 通信ディレクトリ（実行時生成）
-│   ├── envoy_to_marshall.yaml   # Envoy → Marshall 指令
+├── agents/queue/                       # 通信ディレクトリ（実行時生成）
 │   ├── inbox/                   # メッセージボックス
+│   │   ├── envoy.yaml
 │   │   ├── marshall.yaml
 │   │   └── specialist_*.yaml
-│   ├── tasks/                   # タスク詳細
-│   │   └── specialist_*.yaml
+│   ├── tasks/                   # タスク定義（1タスク = 1ファイル）
+│   │   ├── <id>.yaml            # Envoy からの指令
+│   │   └── specialist_*.yaml    # Specialist へのタスク
 │   └── reports/                 # 完了報告
 │       └── specialist_*_report.yaml
 ├── knowledge/                   # 抽出された知識
 │   ├── patterns/
 │   ├── lessons/
 │   └── index.yaml
-└── dashboard.md                 # Marshall が更新
+└── agents/dashboard.md                 # Marshall が更新
 ```
 
 ## コンポーネント間の関係
@@ -81,14 +82,14 @@ bastion/
 ### データフロー
 
 1. **ユーザー入力** → Envoy が受け取り
-2. **指令作成** → Envoy が `queue/envoy_to_marshall.yaml` に書き込み
-3. **inbox_write** → Marshall に通知
-4. **タスク分解** → Marshall が `queue/tasks/` に書き込み
+2. **指令記録** → Envoy が `agents/queue/tasks/<id>.yaml` に書き込み（個別ファイル）
+3. **通知送信** → Envoy が `agents/queue/inbox/marshall.yaml` に通知メッセージを送信
+4. **タスク分解** → Marshall が `agents/queue/tasks/specialist_*.yaml` に書き込み
 5. **inbox_write（並列）** → 各 Specialist に通知
 6. **タスク実行** → Specialist が作業
-7. **レポート** → `queue/reports/` に書き込み + inbox_write
+7. **レポート** → `agents/queue/reports/` に書き込み + inbox_write
 8. **評価・知識抽出** → Marshall が実施
-9. **ダッシュボード更新** → Marshall が `dashboard.md` 更新
+9. **ダッシュボード更新** → Marshall が `agents/dashboard.md` 更新
 10. **結果報告** → Envoy がユーザーに報告
 
 ### 通信方式（Mailbox System）
@@ -101,7 +102,7 @@ inbox.Write(target, message, msgType, from)
 
 // 仕組み
 1. sync.Mutex で排他ロック取得
-2. queue/inbox/<target>.yaml に追記
+2. agents/queue/inbox/<target>.yaml に追記
 3. ロック解放
 4. fsnotify が変更検知
 5. tmux send-keys で target pane に nudge
@@ -149,7 +150,7 @@ Marshall が依存グラフを管理し、並列可能なタスクを同時 disp
 ### 採用したパターン
 
 1. **即時委譲** - Envoy は指示を書いたら即座にターン終了
-2. **単一書き込み者** - dashboard.md は Marshall のみ更新
+2. **単一書き込み者** - agents/dashboard.md は Marshall のみ更新
 3. **nudge 方式** - send-keys は短い wakeup のみ
 4. **YAML 権威** - YAML が正、dashboard は副次情報
 

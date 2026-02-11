@@ -7,8 +7,8 @@
 | 項目     | 内容                                                 |
 | -------- | ---------------------------------------------------- |
 | 責務     | 割り当てられたタスクの実行                           |
-| 入力     | タスク定義（`queue/tasks/specialist_N.yaml`）        |
-| 出力     | レポート（`queue/reports/specialist_N_report.yaml`） |
+| 入力     | タスク定義（`agents/queue/tasks/specialist_N.yaml`）        |
+| 出力     | レポート（`agents/queue/reports/specialist_N_report.yaml`） |
 | 実行環境 | 各 worktree で tmux pane として並列実行              |
 
 ## 主な機能
@@ -35,13 +35,13 @@
 
 Marshall から割り当てられるタスクの詳細フォーマットは `../schemas.yaml` の `task` セクションを参照してください。
 
-タスクは `queue/tasks/specialist_<id>.yaml` から読み取ります。
+タスクは `agents/queue/tasks/specialist_<id>.yaml` から読み取ります。
 
 ## レポートフォーマット
 
 Specialist が Marshall に送信する完了報告の詳細フォーマットは `../schemas.yaml` の `report` セクションを参照してください。
 
-レポートは `queue/reports/specialist_<id>_report.yaml` として保存されます。
+レポートは `agents/queue/reports/specialist_<id>_report.yaml` として保存されます。
 
 ## 禁止事項
 
@@ -72,12 +72,12 @@ Specialist が Marshall に送信する完了報告の詳細フォーマット�
 ```
 1. "inbox" という nudge を受け取る（外部 watcher からの通知）
    ↓
-2. queue/inbox/specialist_N.yaml を読み込む
+2. agents/queue/inbox/specialist_N.yaml を読み込む
    ↓
 3. read: false のメッセージを処理
    - メッセージ内容: タスク割当通知
    ↓
-4. queue/tasks/specialist_N.yaml を読み取る
+4. agents/queue/tasks/specialist_N.yaml を読み取る
    ↓
 5. blocked_by が空であることを確認
    ↓
@@ -87,7 +87,7 @@ Specialist が Marshall に送信する完了報告の詳細フォーマット�
    ↓
 8. レポートを作成
    ↓
-9. queue/reports/specialist_N_report.yaml に保存
+9. agents/queue/reports/specialist_N_report.yaml に保存
    ↓
 10. Marshall に完了を通知
    ↓
@@ -107,9 +107,9 @@ Specialist が Marshall に送信する完了報告の詳細フォーマット�
 
 Marshall への通信には以下の方法を使用します:
 
-1. **レポート送信**: Write ツールで `queue/reports/specialist_<id>_report.yaml` を作成（フォーマットは `../schemas.yaml` の `report` を参照）
-2. **完了通知**: Write または Edit ツールで `queue/inbox/marshall.yaml` に完了メッセージを追加（フォーマットは `../schemas.yaml` の `message` を参照）
-3. **inbox 確認**: Read ツールで `queue/inbox/specialist_<id>.yaml` を読み取り、新しいタスク割り当てを確認
+1. **レポート送信**: Write ツールで `agents/queue/reports/specialist_<id>_report.yaml` を作成（フォーマットは `../schemas.yaml` の `report` を参照）
+2. **完了通知**: Write または Edit ツールで `agents/queue/inbox/marshall.yaml` に完了メッセージを追加（フォーマットは `../schemas.yaml` の `message` を参照）
+3. **inbox 確認**: Read ツールで `agents/queue/inbox/specialist_<id>.yaml` を読み取り、新しいタスク割り当てを確認
 
 ## ベストプラクティス
 

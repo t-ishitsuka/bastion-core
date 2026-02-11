@@ -1,13 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "Read({{PROJECT_ROOT}}/queue/inbox/specialist_*.yaml)",
-      "Write({{PROJECT_ROOT}}/queue/inbox/specialist_*.yaml)",
-      "Read({{PROJECT_ROOT}}/queue/tasks/specialist_*.yaml)",
-      "Read({{PROJECT_ROOT}}/queue/reports/specialist_*_report.yaml)",
-      "Write({{PROJECT_ROOT}}/queue/reports/specialist_*_report.yaml)",
-      "Read({{PROJECT_ROOT}}/queue/inbox/marshall.yaml)",
-      "Write({{PROJECT_ROOT}}/queue/inbox/marshall.yaml)",
+      "Read({{PROJECT_ROOT}}/agents/queue/inbox/specialist_*.yaml)",
+      "Write({{PROJECT_ROOT}}/agents/queue/inbox/specialist_*.yaml)",
+      "Read({{PROJECT_ROOT}}/agents/queue/tasks/specialist_*.yaml)",
+      "Read({{PROJECT_ROOT}}/agents/queue/reports/specialist_*_report.yaml)",
+      "Write({{PROJECT_ROOT}}/agents/queue/reports/specialist_*_report.yaml)",
+      "Read({{PROJECT_ROOT}}/agents/queue/inbox/marshall.yaml)",
+      "Write({{PROJECT_ROOT}}/agents/queue/inbox/marshall.yaml)",
       "Read({{PROJECT_ROOT}}/**/*)",
       "Write({{PROJECT_ROOT}}/**/*)",
       "Bash(cat:*)",

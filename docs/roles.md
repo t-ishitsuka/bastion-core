@@ -10,19 +10,20 @@ Envoy → Marshall → Specialists
 
 ## Envoy
 
-| 項目   | 内容                                             |
-| ------ | ------------------------------------------------ |
-| 責務   | ユーザーとの唯一の対話窓口                       |
-| 入力   | ユーザー入力                                     |
-| 出力   | 指令（`queue/envoy_to_marshall.yaml`）、結果報告 |
-| 決定権 | **what（目的）** と **acceptance_criteria**      |
+| 項目   | 内容                                        |
+| ------ | ------------------------------------------- |
+| 責務   | ユーザーとの唯一の対話窓口                  |
+| 入力   | ユーザー入力                                |
+| 出力   | 指令（`agents/queue/tasks/<id>.yaml`）、結果報告   |
+| 決定権 | **what（目的）** と **acceptance_criteria** |
 
 ### 主な機能
 
 - ユーザーからの要望を受け取り、目的と完了条件を定義
-- `queue/envoy_to_marshall.yaml` に指令を書き込み
+- `agents/queue/tasks/<id>.yaml` に指令を記録（個別ファイル）
+- `agents/queue/inbox/marshall.yaml` に通知メッセージを送信
 - Marshall への即時委譲（ターン終了）
-- `dashboard.md` を読んでユーザーに報告
+- `agents/dashboard.md` を読んでユーザーに報告
 
 ### 禁止事項
 
@@ -58,7 +59,7 @@ Envoy → Marshall → Specialists
 | 入力   | Envoy からの指令、Specialist からのレポート |
 | 出力   | タスク定義、評価、知識抽出                  |
 | 決定権 | **how（実行方法）**                         |
-| 特権   | `dashboard.md` の更新（単一書き込み者）     |
+| 特権   | `agents/dashboard.md` の更新（単一書き込み者）     |
 
 ### 主な機能
 
@@ -67,7 +68,7 @@ Envoy → Marshall → Specialists
 - Specialist への並列割当
 - 完了時の品質評価
 - 知識抽出・共有
-- `dashboard.md` の更新
+- `agents/dashboard.md` の更新
 
 ### 禁止事項
 
@@ -77,7 +78,7 @@ Envoy → Marshall → Specialists
 ### タスク分解フォーマット
 
 ```yaml
-# queue/tasks/specialist_1.yaml
+# agents/queue/tasks/specialist_1.yaml
 task_id: subtask_001
 parent_cmd: cmd_001
 assigned_to: specialist_1
@@ -122,8 +123,8 @@ evaluation:
 | 項目     | 内容                                                 |
 | -------- | ---------------------------------------------------- |
 | 責務     | 割り当てられたタスクの実行                           |
-| 入力     | タスク定義（`queue/tasks/specialist_N.yaml`）        |
-| 出力     | レポート（`queue/reports/specialist_N_report.yaml`） |
+| 入力     | タスク定義（`agents/queue/tasks/specialist_N.yaml`）        |
+| 出力     | レポート（`agents/queue/reports/specialist_N_report.yaml`） |
 | 実行環境 | 各 worktree で tmux pane として並列実行              |
 
 ### 主な機能
@@ -151,7 +152,7 @@ evaluation:
 ### レポートフォーマット
 
 ```yaml
-# queue/reports/specialist_1_report.yaml
+# agents/queue/reports/specialist_1_report.yaml
 worker_id: specialist_1
 task_id: subtask_001
 parent_cmd: cmd_001

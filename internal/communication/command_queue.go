@@ -35,7 +35,7 @@ func (m *CommandQueueManager) Write(cmd Command) error {
 		return fmt.Errorf("failed to create tasks directory: %w", err)
 	}
 
-	// タスクファイルのパス: queue/tasks/<id>.yaml
+	// タスクファイルのパス: agents/queue/tasks/<id>.yaml
 	taskPath := filepath.Join(m.tasksDir, fmt.Sprintf("%s.yaml", cmd.ID))
 
 	// タスクを YAML にシリアライズ

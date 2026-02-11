@@ -33,7 +33,7 @@ func NewOrchestrator(projectRoot string, specialistCount int) *Orchestrator {
 		sm:              parallel.NewSessionManager(),
 		projectRoot:     projectRoot,
 		agentsDir:       filepath.Join(projectRoot, "agents"),
-		queueDir:        filepath.Join(projectRoot, "queue"),
+		queueDir:        filepath.Join(projectRoot, "agents", "queue"),
 		specialistCount: specialistCount,
 	}
 }
@@ -188,7 +188,7 @@ func (o *Orchestrator) processWatcherEvents() {
 // inbox 変更を処理
 func (o *Orchestrator) handleInboxChange(path string) error {
 	// ファイル名から対象エージェントを特定
-	// 例: queue/inbox/marshall.yaml -> marshall
+	// 例: agents/queue/inbox/marshall.yaml -> marshall
 	base := filepath.Base(path)
 	target := base[:len(base)-len(filepath.Ext(base))]
 

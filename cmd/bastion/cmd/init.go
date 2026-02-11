@@ -17,9 +17,8 @@ var initCmd = &cobra.Command{
 	Long: `プロジェクトに Bastion エージェント環境を初期化します。
 
 このコマンドは以下を実行します:
-  - テンプレートから agents/ ディレクトリを作成
-  - queue/ ディレクトリ構造を作成（inbox/, tasks/, reports/）
-  - .gitignore に queue/ を追加
+  - テンプレートから agents/ ディレクトリを作成（queue/ も含む）
+  - .gitignore に agents/queue/ を追加
 
 既存のファイルは上書きせず、新しいファイルのみを追加します（--no-clobber モード）。`,
 	RunE: runInit,
@@ -37,11 +36,11 @@ func runInit(cmd *cobra.Command, args []string) error {
 	}
 
 	agentsDir := filepath.Join(currentDir, "agents")
-	queueDir := filepath.Join(currentDir, "queue")
 
 	fmt.Println("Bastion エージェント環境を初期化しています...")
 
 	// 埋め込まれたテンプレートから agents/ を作成（no-clobber モード）
+	// queue/ も agents/ 配下に含まれる
 	copied, skipped, err := copyEmbeddedDirNoClobber(templates.FS, "agents", agentsDir)
 	if err != nil {
 		return fmt.Errorf("agents/ の作成に失敗: %w", err)
@@ -53,27 +52,11 @@ func runInit(cmd *cobra.Command, args []string) error {
 		fmt.Printf("  (%d 個の既存ファイルはスキップしました)\n", skipped)
 	}
 
-	// queue/ ディレクトリ構造を作成
-	queueSubDirs := []string{"inbox", "tasks", "reports"}
-	createdDirs := 0
-	for _, subDir := range queueSubDirs {
-		dirPath := filepath.Join(queueDir, subDir)
-		if _, err := os.Stat(dirPath); os.IsNotExist(err) {
-			if err := os.MkdirAll(dirPath, 0755); err != nil {
-				return fmt.Errorf("queue/%s/ の作成に失敗: %w", subDir, err)
-			}
-			createdDirs++
-		}
-	}
-	if createdDirs > 0 {
-		fmt.Printf("✓ queue/ ディレクトリ構造を作成しました\n")
-	}
-
-	// .gitignore に queue/ を追加
+	// .gitignore に agents/queue/ を追加
 	if err := updateGitignore(currentDir); err != nil {
 		fmt.Printf("警告: .gitignore の更新に失敗しました: %v\n", err)
 	} else {
-		fmt.Printf("✓ .gitignore に queue/ を追加しました\n")
+		fmt.Printf("✓ .gitignore に agents/queue/ を追加しました\n")
 	}
 
 	fmt.Println("\n初期化が完了しました！")
@@ -171,20 +154,20 @@ func updateGitignore(projectDir string) error {
 		}
 	}
 
-	// queue/ が既に記載されているかチェック
+	// agents/queue/ が既に記載されているかチェック
 	contentStr := string(content)
-	if strings.Contains(contentStr, "queue/") {
+	if strings.Contains(contentStr, "agents/queue/") {
 		// 既に記載されている
 		return nil
 	}
 
-	// queue/ を追加
+	// agents/queue/ を追加
 	newContent := contentStr
 	if len(newContent) > 0 && newContent[len(newContent)-1] != '\n' {
 		newContent += "\n"
 	}
 	newContent += "# Bastion runtime directories\n"
-	newContent += "queue/\n"
+	newContent += "agents/queue/\n"
 
 	return os.WriteFile(gitignorePath, []byte(newContent), 0644)
 }

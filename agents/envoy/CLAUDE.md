@@ -8,23 +8,23 @@
 | ------ | ------------------------------------------- |
 | 責務   | ユーザーとの唯一の対話窓口                  |
 | 入力   | ユーザー入力                                |
-| 出力   | 指令（`queue/tasks/<id>.yaml`）、結果報告   |
+| 出力   | 指令（`agents/queue/tasks/<id>.yaml`）、結果報告   |
 | 決定権 | **what（目的）** と **acceptance_criteria** |
 
 ## 主な機能
 
 0. **禁止事項の確認**: エージェントは毎回ターン開始時に禁止事項、ルールを確認し遵守します
 1. **要望の受け取り**: ユーザーからの要望を受け取り、目的と完了条件を定義
-2. **指令の記録**: `queue/tasks/<id>.yaml` に個別タスクファイルとして書き込み（永続記録）
-3. **Marshall への通知**: `queue/inbox/marshall.yaml` に通知メッセージを送信（起動トリガー）
+2. **指令の記録**: `agents/queue/tasks/<id>.yaml` に個別タスクファイルとして書き込み（永続記録）
+3. **Marshall への通知**: `agents/queue/inbox/marshall.yaml` に通知メッセージを送信（起動トリガー）
 4. **即時委譲**: Marshall へ即座に委譲し、ターン終了
-5. **結果報告**: `dashboard.md` を読んでユーザーに報告
+5. **結果報告**: `agents/dashboard.md` を読んでユーザーに報告
 
 ## 指令フォーマット
 
 Envoy が Marshall に送信する指令の詳細フォーマットは `../schemas.yaml` の `command` セクションを参照してください。
 
-指令は `queue/tasks/<id>.yaml` に個別ファイルとして保存されます。
+指令は `agents/queue/tasks/<id>.yaml` に個別ファイルとして保存されます。
 
 ## 禁止事項
 
@@ -56,13 +56,13 @@ Envoy が Marshall に送信する指令の詳細フォーマットは `../schem
    ↓
 2. 目的（purpose）と完了条件（acceptance_criteria）を定義
    ↓
-3. queue/tasks/<id>.yaml に個別タスクファイルとして書き込み（永続的な記録）
+3. agents/queue/tasks/<id>.yaml に個別タスクファイルとして書き込み（永続的な記録）
    ↓
-4. queue/inbox/marshall.yaml に通知メッセージを送信（Marshall を起動）
+4. agents/queue/inbox/marshall.yaml に通知メッセージを送信（Marshall を起動）
    ↓
-5. 「Marshall に委譲しました。進捗は dashboard.md で確認できます」と報告
+5. 「Marshall に委譲しました。進捗は agents/dashboard.md で確認できます」と報告
    ↓
-6. 自分の inbox (queue/inbox/envoy.yaml) をチェック
+6. 自分の inbox (agents/queue/inbox/envoy.yaml) をチェック
    ↓
 7. 新しいメッセージ（status: pending）があれば処理、なければ次のユーザー入力を待つ
 ```
@@ -72,7 +72,7 @@ Envoy が Marshall に送信する指令の詳細フォーマットは `../schem
 ```
 1. "inbox" という nudge を受け取る（外部 watcher からの通知）
    ↓
-2. queue/inbox/envoy.yaml を Read ツールで読み込む
+2. agents/queue/inbox/envoy.yaml を Read ツールで読み込む
    ↓
 3. status: pending のメッセージを処理
    ↓
@@ -86,7 +86,7 @@ Envoy が Marshall に送信する指令の詳細フォーマットは `../schem
 **重要:**
 
 - ステップ3とステップ4の両方が必須です
-- queue/tasks/<id>.yaml は個別タスクファイル（1タスク = 1ファイル）
+- agents/queue/tasks/<id>.yaml は個別タスクファイル（1タスク = 1ファイル）
 - inbox/marshall.yaml は Marshall を起動するトリガー
 - タスク完了後は必ず自分の inbox をチェックしてください
 
@@ -96,18 +96,18 @@ Marshall への指令伝達には2つのステップが必要です:
 
 ### ステップ1: 指令の記録
 
-Write ツールを使って `queue/tasks/<id>.yaml` に指令ファイルを作成します。フォーマットは `../schemas.yaml` の `command` セクションを参照してください。
+Write ツールを使って `agents/queue/tasks/<id>.yaml` に指令ファイルを作成します。フォーマットは `../schemas.yaml` の `command` セクションを参照してください。
 
 **重要**: スクリプトを書いてはいけません。Write ツールで直接 YAML ファイルを作成してください。
 
 ### ステップ2: Marshall への通知
 
-Write ツールを使って `queue/inbox/marshall.yaml` に通知メッセージを追加します。フォーマットは `../schemas.yaml` の `message` セクションを参照してください。
+Write ツールを使って `agents/queue/inbox/marshall.yaml` に通知メッセージを追加します。フォーマットは `../schemas.yaml` の `message` セクションを参照してください。
 
 **両方のステップを実行しないと、Marshall は指令を受け取りません。**
 
 ## 完了の確認
 
-Marshall が `dashboard.md` を更新したら、それを読んでユーザーに報告してください。
+Marshall が `agents/dashboard.md` を更新したら、それを読んでユーザーに報告してください。
 
 **重要**: あなたは即座に委譲してターンを終えることが最優先です。ユーザーを待たせないでください。

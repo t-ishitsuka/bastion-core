@@ -34,12 +34,12 @@ func TestRunInit(t *testing.T) {
 		t.Error("agents/ ディレクトリが作成されていません")
 	}
 
-	// queue/ ディレクトリ構造が作成されたか確認
+	// agents/queue/ ディレクトリ構造が作成されたか確認
 	queueDirs := []string{
-		filepath.Join(tmpDir, "queue"),
-		filepath.Join(tmpDir, "queue", "inbox"),
-		filepath.Join(tmpDir, "queue", "tasks"),
-		filepath.Join(tmpDir, "queue", "reports"),
+		filepath.Join(tmpDir, "agents", "queue"),
+		filepath.Join(tmpDir, "agents", "queue", "inbox"),
+		filepath.Join(tmpDir, "agents", "queue", "tasks"),
+		filepath.Join(tmpDir, "agents", "queue", "reports"),
 	}
 
 	for _, dir := range queueDirs {
@@ -57,8 +57,8 @@ func TestRunInit(t *testing.T) {
 		if err != nil {
 			t.Errorf(".gitignore の読み取りに失敗: %v", err)
 		}
-		if !contains(string(content), "queue/") {
-			t.Error(".gitignore に queue/ が追加されていません")
+		if !contains(string(content), "agents/queue/") {
+			t.Error(".gitignore に agents/queue/ が追加されていません")
 		}
 	}
 }
@@ -118,17 +118,17 @@ func TestUpdateGitignore(t *testing.T) {
 		{
 			name:            ".gitignore が存在しない場合",
 			existingContent: "",
-			wantContains:    "queue/",
+			wantContains:    "agents/queue/",
 		},
 		{
 			name:            ".gitignore が存在する場合",
 			existingContent: "node_modules/\n",
-			wantContains:    "queue/",
+			wantContains:    "agents/queue/",
 		},
 		{
-			name:            "既に queue/ が記載されている場合",
-			existingContent: "queue/\nnode_modules/\n",
-			wantContains:    "queue/",
+			name:            "既に agents/queue/ が記載されている場合",
+			existingContent: "agents/queue/\nnode_modules/\n",
+			wantContains:    "agents/queue/",
 		},
 	}
 

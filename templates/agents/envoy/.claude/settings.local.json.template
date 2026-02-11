@@ -1,13 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "Read({{PROJECT_ROOT}}/queue/inbox/envoy.yaml)",
-      "Write({{PROJECT_ROOT}}/queue/inbox/envoy.yaml)",
-      "Read({{PROJECT_ROOT}}/queue/tasks/*.yaml)",
-      "Write({{PROJECT_ROOT}}/queue/tasks/*.yaml)",
-      "Read({{PROJECT_ROOT}}/queue/inbox/marshall.yaml)",
-      "Write({{PROJECT_ROOT}}/queue/inbox/marshall.yaml)",
-      "Read({{PROJECT_ROOT}}/dashboard.md)",
+      "Read({{PROJECT_ROOT}}/agents/queue/inbox/envoy.yaml)",
+      "Write({{PROJECT_ROOT}}/agents/queue/inbox/envoy.yaml)",
+      "Read({{PROJECT_ROOT}}/agents/queue/tasks/*.yaml)",
+      "Write({{PROJECT_ROOT}}/agents/queue/tasks/*.yaml)",
+      "Read({{PROJECT_ROOT}}/agents/queue/inbox/marshall.yaml)",
+      "Write({{PROJECT_ROOT}}/agents/queue/inbox/marshall.yaml)",
+      "Read({{PROJECT_ROOT}}/agents/dashboard.md)",
       "Bash(cat:*)",
       "Bash(ls:*)",
       "Bash(pwd:*)",

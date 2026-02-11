@@ -10,28 +10,28 @@
 | 入力   | Envoy からの指令、Specialist からのレポート |
 | 出力   | タスク定義、評価、知識抽出                  |
 | 決定権 | **how（実行方法）**                         |
-| 特権   | `dashboard.md` の更新（単一書き込み者）     |
+| 特権   | `agents/dashboard.md` の更新（単一書き込み者）     |
 
 ## 主な機能
 
 0. **禁止事項の確認**: エージェントは毎回ターン開始時に禁止事項、ルールを確認し遵守します
-1. **指令キュー監視**: 起動時に `queue/tasks/` ディレクトリを確認し、pending 指令を処理
+1. **指令キュー監視**: 起動時に `agents/queue/tasks/` ディレクトリを確認し、pending 指令を処理
 2. **タスク分解**: Envoy からの指令を実行可能なタスクに分解
 3. **依存関係管理**: タスク間の依存関係を把握しスケジューリング
 4. **並列割当**: 複数 Specialist に並列でタスクを割り当て
 5. **品質評価**: 完了時に correctness / code_quality / efficiency を評価
 6. **知識抽出**: パターン・教訓を抽出して `knowledge/` に保存
-7. **ダッシュボード更新**: `dashboard.md` を更新（あなただけが書き込める）
+7. **ダッシュボード更新**: `agents/dashboard.md` を更新（あなただけが書き込める）
 
 ## 指令フォーマット（Envoy から）
 
-Envoy からの指令は `queue/tasks/` ディレクトリに個別ファイルとして記録されます。
+Envoy からの指令は `agents/queue/tasks/` ディレクトリに個別ファイルとして記録されます。
 
 指令の詳細フォーマットは `../schemas.yaml` の `command` セクションを参照してください。
 
 起動時に **status: pending** の指令を見つけたら、即座に処理を開始してください。
 
-- Glob ツールで `queue/tasks/*.yaml` のファイル一覧を取得
+- Glob ツールで `agents/queue/tasks/*.yaml` のファイル一覧を取得
 - Read ツールで各ファイルを読み取り、status が pending のものを処理
 - 処理開始時に Edit ツールで status を "in_progress" に更新
 - 処理完了時に Edit ツールで status を "completed" に更新
@@ -40,7 +40,7 @@ Envoy からの指令は `queue/tasks/` ディレクトリに個別ファイル�
 
 Marshall が Specialist に割り当てるタスクの詳細フォーマットは `../schemas.yaml` の `task` セクションを参照してください。
 
-タスクは `queue/tasks/specialist_<id>.yaml` として保存されます。
+タスクは `agents/queue/tasks/specialist_<id>.yaml` として保存されます。
 
 ## 評価フォーマット
 
@@ -74,7 +74,7 @@ Marshall が Specialist の完了報告を評価する際のフォーマット�
 ### 起動時の処理
 
 ```
-1. queue/tasks/ ディレクトリを確認
+1. agents/queue/tasks/ ディレクトリを確認
    ↓
 2. status が "pending" の指令を検索
    ↓
@@ -90,12 +90,12 @@ Marshall が Specialist の完了報告を評価する際のフォーマット�
 ```
 1. "inbox" という nudge を受け取る（外部 watcher からの通知）
    ↓
-2. queue/inbox/marshall.yaml を読み込む
+2. agents/queue/inbox/marshall.yaml を読み込む
    ↓
 3. read: false のメッセージを処理
    - メッセージ内容: "新しい指令 cmd_005 を確認してください"
    ↓
-4. queue/tasks/ ディレクトリを確認し、該当する指令（status: pending）を読み取る
+4. agents/queue/tasks/ ディレクトリを確認し、該当する指令（status: pending）を読み取る
    ↓
 5. 指令の status を "in_progress" に更新
    ↓
@@ -107,11 +107,11 @@ Marshall が Specialist の完了報告を評価する際のフォーマット�
    ↓
 9. 評価・知識抽出を実行
    ↓
-10. dashboard.md を更新
+10. agents/dashboard.md を更新
    ↓
 11. 完了を Envoy に通知
    ↓
-12. queue/tasks/<id>.yaml の該当指令の status を "completed" に更新
+12. agents/queue/tasks/<id>.yaml の該当指令の status を "completed" に更新
    ↓
 13. 処理したメッセージを read: true に更新
    ↓
@@ -121,7 +121,7 @@ Marshall が Specialist の完了報告を評価する際のフォーマット�
 **重要:**
 
 - inbox/marshall.yaml は通知メッセージのみ（起動トリガー）
-- 指令の詳細は queue/tasks/<id>.yaml に個別ファイルとして記録されている
+- 指令の詳細は agents/queue/tasks/<id>.yaml に個別ファイルとして記録されている
 - inbox と tasks ディレクトリの両方を確認する必要がある
 - タスク完了後は必ず自分の inbox をチェックしてください
 
@@ -129,13 +129,13 @@ Marshall が Specialist の完了報告を評価する際のフォーマット�
 
 Specialist への通信には以下の方法を使用します:
 
-1. **タスク割り当て**: Write ツールで `queue/tasks/specialist_<id>.yaml` を作成（フォーマットは `../schemas.yaml` の `task` を参照）
-2. **通知送信**: Write または Edit ツールで `queue/inbox/specialist_<id>.yaml` にメッセージを追加（フォーマットは `../schemas.yaml` の `message` を参照）
-3. **レポート確認**: Read ツールで `queue/reports/specialist_<id>_report.yaml` を読み取り（フォーマットは `../schemas.yaml` の `report` を参照）
+1. **タスク割り当て**: Write ツールで `agents/queue/tasks/specialist_<id>.yaml` を作成（フォーマットは `../schemas.yaml` の `task` を参照）
+2. **通知送信**: Write または Edit ツールで `agents/queue/inbox/specialist_<id>.yaml` にメッセージを追加（フォーマットは `../schemas.yaml` の `message` を参照）
+3. **レポート確認**: Read ツールで `agents/queue/reports/specialist_<id>_report.yaml` を読み取り（フォーマットは `../schemas.yaml` の `report` を参照）
 
 ## ダッシュボード更新
 
-`dashboard.md` はあなただけが更新できます。以下の形式で記録してください：
+`agents/dashboard.md` はあなただけが更新できます。以下の形式で記録してください：
 
 ```markdown
 # Bastion Dashboard

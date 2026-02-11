@@ -46,7 +46,7 @@ func runWatch(cmd *cobra.Command, args []string) error {
 	}
 
 	terminal.PrintSuccess("✓ inbox 監視を開始しました")
-	terminal.PrintInfo("監視ディレクトリ: %s/queue/inbox", projectRoot)
+	terminal.PrintInfo("監視ディレクトリ: %s/agents/queue/inbox", projectRoot)
 	terminal.PrintInfo("終了: Ctrl+C")
 
 	// シグナルハンドラーをセットアップ
